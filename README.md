@@ -23,21 +23,21 @@ This repository contains the game, not an automatically deployed hosted website.
 
 ## Controls
 
-| Control | Action |
-| --- | --- |
-| **W** (hold) | Increase throttle |
-| **S** (hold) | Reduce throttle; wheel brakes when grounded |
-| **A / D** | Roll left / right; gentle steering on the ground |
-| **Mouse toward you** (positive Y) | Pull back / nose up |
-| **Mouse away from you** (negative Y) | Push forward / nose down |
-| **Mouse left / right** | Yaw left / right |
-| **G** | Toggle landing gear (animated; retraction is protected while grounded) |
-| **F** | Toggle flaps: extra lift and drag, lower stall speed |
-| **R** | Restart on the dining table, including from pause / crash |
-| **Click game / LET’S FLY** | Capture mouse and resume |
-| **Esc** | Release mouse and pause |
-| **H / Flight school** | Replay or hide tutorial |
-| **Enter / Skip** | Dismiss tutorial |
+| Control                              | Action                                                                 |
+| ------------------------------------ | ---------------------------------------------------------------------- |
+| **W** (hold)                         | Increase throttle                                                      |
+| **S** (hold)                         | Reduce throttle; wheel brakes when grounded                            |
+| **A / D**                            | Roll left / right; gentle steering on the ground                       |
+| **Mouse toward you** (positive Y)    | Pull back / nose up                                                    |
+| **Mouse away from you** (negative Y) | Push forward / nose down                                               |
+| **Mouse left / right**               | Yaw left / right                                                       |
+| **G**                                | Toggle landing gear (animated; retraction is protected while grounded) |
+| **F**                                | Toggle flaps: extra lift and drag, lower stall speed                   |
+| **R**                                | Restart on the dining table, including from pause / crash              |
+| **Click game / LET’S FLY**           | Capture mouse and resume                                               |
+| **Esc**                              | Release mouse and pause                                                |
+| **H / Flight school**                | Replay or hide tutorial                                                |
+| **Enter / Skip**                     | Dismiss tutorial                                                       |
 
 W/S is intentional: the original request mentioned A twice; A/D remains roll.
 
@@ -45,7 +45,7 @@ W/S is intentional: the original request mentioned A twice; A/D remains roll.
 
 A Thrustmaster **configured to emit mouse movement** works like the mouse (native joystick axes / WebHID are not implemented). Browsers cannot warp the real OS cursor to screen center. Instead this game uses the **Pointer Lock API** for unlimited relative `movementX/Y`, hiding the OS cursor while locked. Relative movement deflects a circular **virtual stick**, with a 5.5% deadzone. A light spring continuously centers it; **110 ms after movement pauses**, a stronger spring rapidly returns it to neutral. It never gets stuck at a screen edge. The reticle and amber pip show deflection.
 
-Use small, repeated pushes to change attitude, not a permanently held mouse offset. Centering returns the *input* to neutral; aircraft attitude settles gradually. Pointer Lock needs a real click and localhost or HTTPS, and may be restricted inside embedded previews. Esc always releases the mouse. This build has not been validated on physical Thrustmaster hardware.
+Use small, repeated pushes to change attitude, not a permanently held mouse offset. Centering returns the _input_ to neutral; aircraft attitude settles gradually. Pointer Lock needs a real click and localhost or HTTPS, and may be restricted inside embedded previews. Esc always releases the mouse. This build has not been validated on physical Thrustmaster hardware.
 
 ## Your first flight
 
@@ -76,8 +76,9 @@ Put assets in **`public/models/`**. All geometry should use **meters**, **+Y up*
 
 ```js
 // In src/main.js, import loadPlaneModel and call after createPlane():
-loadPlaneModel(plane, '/models/my-plane.glb', { scale: 1 })
-  .catch(console.error);
+loadPlaneModel(plane, "/models/my-plane.glb", { scale: 1 }).catch(
+  console.error,
+);
 ```
 
 The loader hides the primitive rig and shows your GLTF/GLB; it does **not** automatically bind its propeller, gear or flap bones. Adapt `animatePlane()` to your named model parts for those animations. The primitive semantic-part rig is retained as fallback crash debris; to break your custom model apart, populate `plane.pieces` with its named components and update the crash visual handling. Default groups: `Fuselage`, `LeftWing`, `RightWing`, `Tail`, `Propeller`, `Gear0..2`.
