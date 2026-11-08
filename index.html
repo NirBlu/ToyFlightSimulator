@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#132d3b" />
+  <meta name="description" content="A tiny airplane. A very big living room. Take off from the dinner table and stick a couch-arm landing!" />
+  <title>Toy Flight · Living room adventures</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23132d3b'/%3E%3Ctext x='8' y='46' font-size='44'%3E✈%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+  <canvas id="game" aria-label="Toy plane flight simulator. Desktop keyboard and mouse required."></canvas>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-icon">✈</span><div>TOY FLIGHT<small>LIVING ROOM ADVENTURES</small></div></div>
+      <div class="mission"><span class="live-dot"></span><span id="objective">YOUR FIRST FLIGHT · DINING TABLE → COUCH ARM</span></div>
+      <button id="help" class="ghost">Flight school <kbd>H</kbd></button>
+    </header>
+    <div class="location"><span class="eyebrow">THE WORLD IS BIG. YOU ARE TINY.</span><h1>Cleared for<br/><em>the living room.</em></h1><p>One little plane. Endless landing spots.</p></div>
+    <aside id="tutorial" class="tutorial" hidden aria-label="Flight school tutorial">
+      <div class="card-top"><span class="eyebrow">✦ LITTLE PILOT FLIGHT SCHOOL</span><button id="skip" class="text-button">Skip ↗</button></div>
+      <div class="step-track" id="step-track"></div>
+      <span id="lesson-number" class="lesson-number"></span><h2 id="lesson-title"></h2><p id="lesson-copy"></p>
+      <div class="lesson-bottom"><span id="lesson-hint"></span><button id="next" class="small-button">Next →</button></div>
+    </aside>
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="target-label" class="target-label" hidden><span>◎</span> COUCH ARM <small id="target-distance"></small></div>
+    <div id="reticle" aria-hidden="true"><i class="reticle-h"></i><i class="reticle-v"></i><div id="stick-pip"></div></div>
+    <div id="stall" hidden>↓ TOO SLOW · NOSE DOWN, THROTTLE UP</div>
+    <section id="menu" class="menu">
+      <span class="eyebrow">READY, LITTLE PILOT?</span><h2>Your room.<br/>Your runway.</h2><p>Take off from the table. Find the glowing landing pads.<br/>A couch arm has never looked so adventurous.</p>
+      <button id="play" class="primary">LET’S FLY <span>↗</span></button><small>Click to capture your mouse · Esc to pause</small>
+    </section>
+    <section id="crash-screen" class="menu crash-menu" hidden>
+      <span class="eyebrow">A LITTLE BUMP IN THE ADVENTURE</span><h2>You crashed!</h2><p id="crash-reason"></p><button id="retry" class="primary">TRY AGAIN <kbd>R</kbd></button><small>New plane. Fresh start. You've got this.</small>
+    </section>
+    <section class="instruments" aria-label="Flight instruments">
+      <div class="speed instrument"><span>AIRSPEED</span><strong id="speed">0.00 <small>m/s</small></strong><div id="speed-tag" class="tiny-label">SPOOL UP TO 0.85</div></div>
+      <div class="instrument throttle"><span>THROTTLE <b id="throttle">0%</b></span><div class="meter"><i id="throttle-fill"></i></div><div class="tiny-label"><kbd>W</kbd> MORE <kbd>S</kbd> LESS / BRAKE</div></div>
+      <div class="instrument altitude"><span>HEIGHT</span><strong id="height">86 <small>cm</small></strong><div class="tiny-label">ABOVE THE FLOOR</div></div>
+      <div class="instrument switches"><div><kbd>G</kbd> GEAR <b id="gear" class="green">DOWN</b></div><div><kbd>F</kbd> FLAPS <b id="flaps">UP</b></div></div>
+      <div class="room-map"><span class="eyebrow">ROOM RADAR</span><svg id="radar" viewBox="0 0 90 110" aria-label="Top-down room radar"><rect x="3" y="3" width="84" height="104" rx="5" fill="#ffffff09" stroke="#ffffff30"/><rect x="13" y="62" width="21" height="28" rx="3" fill="#f0bd7170"/><rect x="64" y="14" width="17" height="32" rx="3" fill="#5cceb580"/><rect x="45" y="57" width="15" height="11" rx="2" fill="#5cceb540"/><path id="map-plane" d="M0,-5 L3,4 L0,2 L-3,4Z" fill="#ffde98"/></svg></div>
+    </section>
+    <footer><span><kbd>A</kbd><kbd>D</kbd> ROLL <i>·</i> MOUSE: PITCH & YAW <i>·</i> <kbd>G</kbd> GEAR <i>·</i> <kbd>F</kbd> FLAPS</span><span id="status">DESKTOP · KEYBOARD + MOUSE / THRUSTMASTER</span></footer>
+    <div id="fatal" hidden role="alert"></div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
