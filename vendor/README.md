@@ -1,1 +1,1 @@
-These are the Three.js r187 browser builds (MIT), vendored so the game can load without Vite or node_modules.
+These are the Three.js r187 browser builds and addons (MIT), vendored so the game can load without Vite or node_modules. Import them with relative paths only — never `three` or `three/addons/...` from src/.

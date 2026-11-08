@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three.module.js";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { GLTFLoader } from "../vendor/addons/loaders/GLTFLoader.js";
 
 const material = (color, extra = {}) =>
   new THREE.MeshStandardMaterial({ color, roughness: 0.45, ...extra });
