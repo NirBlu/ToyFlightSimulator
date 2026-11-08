@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import "./style.css";
 import { createPlane, animatePlane } from "./plane.js";
 import { createRoom } from "./room.js";
 import { Controls } from "./controls.js";
