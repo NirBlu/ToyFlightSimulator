@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from "../vendor/three.module.js";
 
 export const GRAVITY = 2.3; // deliberately toy-like: easier than full earth gravity at this scale
 export const GEAR_CLEARANCE = 0.068;

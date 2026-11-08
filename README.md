@@ -21,7 +21,7 @@ npm run preview  # serve the built site locally
 
 This repository contains the game, not an automatically deployed hosted website. Deploy `dist/` to any static HTTPS host. Relative asset paths work with GitHub Pages subpaths too. Do not open `index.html` directly with `file://`.
 
-If the page is mostly blank HUD shapes and the console says it failed to resolve `three`, the browser loaded the source without Vite or without `node_modules`. Run `npm install` in the project folder, then `npm run dev`, and open the localhost URL it prints (not the HTML file itself).
+Three.js is vendored in `vendor/` so a normal folder preview (Live Server, etc.) can load the scene without Vite resolving npm packages. You can still run `npm install` and `npm run dev` for the nicest local setup. Do a hard refresh after pulling so the browser does not keep an old `main.js`.
 
 ## Controls
 

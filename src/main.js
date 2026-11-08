@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from "../vendor/three.module.js";
 import { createPlane, animatePlane } from "./plane.js";
 import { createRoom } from "./room.js";
 import { Controls } from "./controls.js";
