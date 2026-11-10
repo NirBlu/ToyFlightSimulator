@@ -14,9 +14,10 @@ try {
   console.error(error);
   const el = document.querySelector("#fatal");
   el.hidden = false;
-  el.textContent =
-    "This little plane needs WebGL 2. Try a current desktop Chrome, Edge or Firefox with hardware acceleration enabled. " +
-    error.message;
+  const webgl = /webgl/i.test(String(error && error.message));
+  el.textContent = webgl
+    ? "This little plane needs WebGL 2. Try a current desktop Chrome, Edge or Firefox with hardware acceleration enabled. " + error.message
+    : "Something went wrong starting the game: " + (error && error.message);
 }
 function start() {
   const renderer = new THREE.WebGLRenderer({
@@ -210,7 +211,7 @@ function start() {
     renderer.setSize(innerWidth, innerHeight);
   });
   // Local-only inspection hook for simulation tests and model integration, omitted from production.
-  if (import.meta.env.DEV)
+  if (import.meta.env?.DEV)
     window.__toyFlight = {
       get state() {
         return state;
