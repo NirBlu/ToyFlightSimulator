@@ -707,3 +707,138 @@ footer kbd {
     opacity: 0;
   }
 }
+
+/* ---- Levels, damage and hit feedback ---- */
+.top-buttons {
+  display: flex;
+  gap: 10px;
+}
+#menu {
+  top: 11%;
+  max-height: calc(100vh - 230px);
+  overflow: auto;
+}
+#menu h2 {
+  font-size: 32px;
+  margin: 12px 0;
+}
+.levels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+.level-card {
+  position: relative;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 10px 9px;
+  border-radius: 11px;
+  border: 1px solid #fff3;
+  background: #ffffff0d;
+  color: #fff9e9;
+  min-height: 74px;
+}
+.level-card:hover {
+  background: #ffffff1c;
+}
+.level-card.selected {
+  border-color: #ffca7a;
+  background: #ffca7a26;
+  box-shadow: 0 0 0 1px #ffca7a inset;
+}
+.level-card b {
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+.level-card small {
+  font-size: 8.5px;
+  line-height: 1.35;
+  color: #fff9;
+}
+.level-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+.level-card kbd {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 8px;
+  padding: 2px 4px;
+}
+.primary {
+  margin-top: 16px;
+}
+.secondary {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1px solid #fff4;
+  background: #ffffff10;
+  color: #fff9e9;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+.secondary:hover {
+  background: #ffffff20;
+}
+.instruments {
+  max-width: 1080px;
+}
+.damage {
+  min-width: 170px;
+}
+.damage > span {
+  display: flex;
+  justify-content: space-between;
+}
+.damage b {
+  font-size: 12px;
+  color: #ffda95;
+  letter-spacing: 0;
+}
+.damage .meter i {
+  background: #91debb;
+  transition:
+    width 0.2s,
+    background 0.2s;
+}
+.target-label b {
+  font-weight: 700;
+}
+#hit-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, #ff6a4000 45%, #ff4a2acc 100%);
+}
+#hit-flash.fade {
+  animation: hit-fade 0.55s ease-out forwards;
+}
+@keyframes hit-fade {
+  to {
+    opacity: 0;
+  }
+}
+@media (max-width: 1050px) {
+  .damage {
+    min-width: 130px;
+  }
+}
+@media (max-width: 740px) {
+  #menu {
+    top: 12%;
+  }
+  .level-card small {
+    display: none;
+  }
+  .level-card {
+    min-height: 0;
+  }
+}

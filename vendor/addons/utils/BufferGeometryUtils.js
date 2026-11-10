@@ -14,7 +14,7 @@ import {
 
 /**
  * @module BufferGeometryUtils
- * @three_import import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+ * @three_import import * as BufferGeometryUtils from '../vendor/addons/utils/BufferGeometryUtils.js';
  */
 
 /**

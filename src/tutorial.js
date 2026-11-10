@@ -1,12 +1,12 @@
 const lessons = [
   [
     "Meet your tiny plane",
-    "Your dining table is a runway! Click LET’S FLY to capture the mouse. Mouse back = nose up. Mouse sideways = turn.",
+    "Pick a level (keys 1–4 or L anytime), then click LET’S FLY to capture the mouse. Mouse back = nose up. Mouse sideways = turn.",
     "Click to capture your mouse",
   ],
   [
     "Give it some power",
-    "Hold W to spool up. Keep the wings level and watch the airspeed climb. The table ends sooner than you think!",
+    "Hold W to spool up. Keep the wings level and watch the airspeed climb. Your runway ends sooner than you think!",
     "Hold W · aim for 0.85 m/s",
   ],
   [
@@ -21,17 +21,17 @@ const lessons = [
   ],
   [
     "Find your next runway",
-    "Look for the mint-green couch arms. Use mouse sideways to yaw and A / D to bank. Small movements are best.",
-    "Follow the COUCH ARM marker",
+    "Follow the glowing marker, or pick ANY flat spot: a table, the floor, the grass, even a car roof! Mouse sideways = yaw, A / D = bank.",
+    "Follow the ◎ marker or explore",
   ],
   [
     "Get ready to land",
-    "Line up with an arm. Press F for flaps to slow down, then G for wheels down. Ease off the power with S.",
+    "Line up with a flat spot. Press F for flaps to slow down, then G for wheels down. Ease off the power with S.",
     "F: flaps DOWN · G: gear DOWN",
   ],
   [
     "Make a gentle touchdown",
-    "Stay level, float down gently and keep below 1.35 m/s. Touch wheels first on the glowing cloth, then hold S to brake. You’ve got this!",
+    "Stay level, float down gently, keep below 1.35 m/s and touch wheels first. Bumpy landings and bonks add DAMAGE (100% breaks the plane). Hold S to brake!",
     "Gentle nose up · S to brake",
   ],
 ];

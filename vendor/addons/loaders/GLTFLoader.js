@@ -125,7 +125,7 @@ import { clone } from '../utils/SkeletonUtils.js';
  * ```
  *
  * @augments Loader
- * @three_import import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+ * @three_import import { GLTFLoader } from '../vendor/addons/loaders/GLTFLoader.js';
  */
 class GLTFLoader extends Loader {
 

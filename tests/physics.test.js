@@ -144,43 +144,81 @@ test("very slow gear-up contact is a survivable scrape", () => {
   s.velocity.set(0, -0.05, -0.2);
   assert.equal(assessLanding(s), "scrape");
 });
-test("wall impact triggers crash once", () => {
+test("slow bump into a room wall adds damage instead of exploding", () => {
   const s = flight();
-  s.position.x = 2.99;
+  s.position.set(2.95, 1.5, 0);
+  s.velocity.set(0.6, 0, 0);
+  let hits = 0;
+  stepFlight(
+    s,
+    neutral,
+    1 / 120,
+    {
+      pads: [],
+      colliders: [],
+      bounds: { minX: -2.94, maxX: 2.94, minZ: -3.94, maxZ: 3.94, maxY: 2.64 },
+    },
+    { hit: () => hits++, crash: () => assert.fail("should not crash") },
+  );
+  assert.equal(s.crashed, false);
+  assert.equal(hits, 1);
+  assert.ok(s.damage > 0 && s.damage < 30, `damage ${s.damage}`);
+  assert.ok(s.position.x <= 2.94);
+  assert.ok(s.velocity.x <= 0, "bounced back off the wall");
+});
+test("violent head-on wall impact still crashes, exactly once", () => {
+  const s = flight();
+  s.position.set(2.95, 1.5, 0);
+  s.velocity.set(2.2, 0, 0);
   let n = 0;
-  stepFlight(
-    s,
-    neutral,
-    1 / 120,
-    { pads: [], colliders: [] },
-    { crash: () => n++ },
-  );
-  stepFlight(
-    s,
-    neutral,
-    1 / 120,
-    { pads: [], colliders: [] },
-    { crash: () => n++ },
-  );
+  const box = {
+    pads: [],
+    colliders: [],
+    bounds: { minX: -2.94, maxX: 2.94, minZ: -3.94, maxZ: 3.94, maxY: 2.64 },
+  };
+  stepFlight(s, neutral, 1 / 120, box, { crash: () => n++ });
+  stepFlight(s, neutral, 1 / 120, box, { crash: () => n++ });
   assert.equal(s.crashed, true);
   assert.equal(n, 1);
 });
-test("furniture and wingtip impacts trigger destruction callback", () => {
-  const s = flight();
-  let reason = "";
+test("gentle wingtip / furniture bump damages, fast head-on impact destroys", () => {
   const obstacle = {
     min: new Vector3(0.15, 1.4, -0.1),
     max: new Vector3(0.3, 1.6, 0.1),
     name: "Bookcase",
   };
-  stepFlight(
-    s,
-    neutral,
-    1 / 120,
-    { pads: [], colliders: [obstacle] },
-    { crash: (r) => (reason = r) },
-  );
-  assert.equal(s.crashed, true);
+  const slow = flight();
+  slow.position.set(-0.05, 1.5, 0);
+  slow.velocity.set(0.5, 0, 0);
+  let info = null;
+  for (let i = 0; i < 30 && !info; i++)
+    stepFlight(
+      slow,
+      neutral,
+      1 / 120,
+      { pads: [], colliders: [obstacle] },
+      { hit: (h) => (info = h) },
+    );
+  assert.equal(slow.crashed, false);
+  assert.ok(slow.damage > 0);
+  assert.equal(info.name, "bookcase");
+  const fast = flight();
+  fast.velocity.set(0, 0, -2.2);
+  const wall = {
+    min: new Vector3(-1, 0, -0.3),
+    max: new Vector3(1, 3, -0.15),
+    name: "Bookcase",
+  };
+  let reason = "";
+  for (let i = 0; i < 10 && !fast.crashed; i++)
+    stepFlight(
+      fast,
+      neutral,
+      1 / 120,
+      { pads: [], colliders: [wall] },
+      { crash: (r) => (reason = r) },
+    );
+  assert.equal(fast.crashed, true);
   assert.match(reason, /bookcase/);
 });
 test("landing boundaries do not accept a pad outside its marked area", () => {
