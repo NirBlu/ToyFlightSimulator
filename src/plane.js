@@ -137,8 +137,10 @@ export function animatePlane(plane, state, dt) {
   plane.gears.forEach((g, i) => {
     const retract = g.userData.retract;
     const up = 1 - plane.gearBlend;
-    if (retract) g.rotation[retract.axis] = up * retract.angle;
-    else g.rotation.z = up * (i === 0 ? -1.45 : 1.45);
+    if (retract) {
+      g.rotation[retract.axis] = up * retract.angle;
+      if (retract.lift) g.position.y = retract.baseY + up * retract.lift;
+    } else g.rotation.z = up * (i === 0 ? -1.45 : 1.45);
     g.visible = plane.gearBlend > 0.025;
   });
   plane.flaps.forEach((f) => {
@@ -156,54 +158,63 @@ export const NIR_PLANE = {
   wingspan: 0.317, // meters, about the size of the primitive toy plane
   cgFromNose: 0.4635, // fraction of the length, just ahead of the wing root
   belly: 0.033, // lowest point (engine nacelles) = physics gear-up clearance
+  // Gear-down origin height above the ground. A real 737 sits low: short legs,
+  // ~1.4 cm (scaled) between the engine nacelles and the ground.
+  gearDown: 0.047,
+  groundPitchMax: 0.24, // nose-up limit on the ground so the tail never scrapes
   gear: [
     // x, z in plane space; the strut top is found by raycasting up to the skin.
     {
       name: "MainGearLeft",
-      x: -0.022,
+      x: -0.02,
       z: 0.013,
       axis: "z",
       angle: 1.45,
-      r: 0.011,
+      r: 0.0095,
       dual: true,
+      lift: 0.003,
     },
     {
       name: "MainGearRight",
-      x: 0.022,
+      x: 0.02,
       z: 0.013,
       axis: "z",
       angle: -1.45,
-      r: 0.011,
+      r: 0.0095,
       dual: true,
+      lift: 0.003,
     },
     {
       name: "NoseGear",
       x: 0,
       z: -0.126,
       axis: "x",
-      angle: 1.45,
-      r: 0.009,
+      angle: -1.45, // folds aft into the nose wheel well
+      lift: 0.007,
+      r: 0.008,
       dual: true,
     },
   ],
 };
-/** Physics puts the plane origin this far above the ground with gear down. */
-const GEAR_DOWN_CLEARANCE = 0.068;
-
-function buildGear(parent, spec, top) {
+function buildGear(parent, spec, top, groundY) {
   const gear = new THREE.Group();
   gear.name = spec.name;
   gear.position.set(spec.x, top, spec.z);
-  gear.userData.retract = { axis: spec.axis, angle: spec.angle };
+  gear.userData.retract = {
+    axis: spec.axis,
+    angle: spec.angle,
+    lift: spec.lift || 0, // rises into the wheel well while folding
+    baseY: top,
+  };
   parent.add(gear);
-  const wheelY = -GEAR_DOWN_CLEARANCE + spec.r - top;
+  const wheelY = groundY + spec.r - top;
   const strut = box(0.0035, -wheelY, 0.0035, metal, gear, [0, wheelY / 2, 0]);
   strut.name = "Strut";
-  const offsets = spec.dual ? [-0.0048, 0.0048] : [0];
-  if (spec.dual) box(0.0125, 0.0025, 0.0025, metal, gear, [0, wheelY, 0]);
+  const offsets = spec.dual ? [-0.0042, 0.0042] : [0];
+  if (spec.dual) box(0.011, 0.0025, 0.0025, metal, gear, [0, wheelY, 0]);
   for (const dx of offsets) {
     const w = mesh(
-      new THREE.CylinderGeometry(spec.r, spec.r, 0.0065, 14),
+      new THREE.CylinderGeometry(spec.r, spec.r, 0.006, 14),
       rubber,
       gear,
       [dx, wheelY, 0],
@@ -211,7 +222,7 @@ function buildGear(parent, spec, top) {
     w.rotation.z = Math.PI / 2;
     w.name = "Wheel";
     const hub = mesh(
-      new THREE.CylinderGeometry(spec.r * 0.42, spec.r * 0.42, 0.007, 10),
+      new THREE.CylinderGeometry(spec.r * 0.42, spec.r * 0.42, 0.0065, 10),
       cream,
       gear,
       [dx, wheelY, 0],
@@ -335,7 +346,7 @@ export async function loadPlaneModel(
         if (hit) top = Math.max(top, hit.point.y + 0.001);
       }
     if (!Number.isFinite(top)) top = -opts.belly;
-    return buildGear(gearRoot, spec, top);
+    return buildGear(gearRoot, spec, top, -opts.gearDown);
   });
   raycastTargets.forEach((m, i) => (m.material.side = sides[i]));
 
@@ -370,6 +381,9 @@ export async function loadPlaneModel(
   plane.importedModel = model;
   plane.primitives.visible = false;
   plane.gears = gears;
+  // Physics: gear-down height above the belly height, and the ground pitch limit.
+  plane.gearDrop = opts.gearDown - opts.belly;
+  plane.groundPitchMax = opts.groundPitchMax;
   plane.pieces = [...pieces, ...gears];
   plane.modelInfo = {
     scale,

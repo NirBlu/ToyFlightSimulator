@@ -4,15 +4,15 @@ import {
   animatePlane,
   loadPlaneModel,
   PLANE_MODEL_URL,
-} from "./plane.js?v=6";
-import { Controls } from "./controls.js?v=6";
-import { createFlightState, stepFlight } from "./physics.js?v=6";
-import { stepBalls, syncBallMeshes } from "./balls.js?v=6";
-import { CrashEffects } from "./crash.js?v=6";
-import { DamageSmoke } from "./effects.js?v=6";
-import { Tutorial } from "./tutorial.js?v=6";
-import { UI } from "./ui.js?v=6";
-import { LEVELS, getLevel } from "./levels/index.js?v=6";
+} from "./plane.js?v=7";
+import { Controls } from "./controls.js?v=7";
+import { createFlightState, stepFlight } from "./physics.js?v=7";
+import { stepBalls, syncBallMeshes } from "./balls.js?v=7";
+import { CrashEffects } from "./crash.js?v=7";
+import { DamageSmoke } from "./effects.js?v=7";
+import { Tutorial } from "./tutorial.js?v=7";
+import { UI } from "./ui.js?v=7";
+import { LEVELS, getLevel } from "./levels/index.js?v=7";
 
 const canvas = document.querySelector("#game");
 try {
@@ -66,12 +66,25 @@ function start() {
   renderer.toneMappingExposure = 1.25;
   const plane = createPlane();
   // Nir's GLB plane; if it can't load, the built-in toy plane keeps flying.
-  loadPlaneModel(plane, PLANE_MODEL_URL).catch((error) =>
-    console.warn(
-      "Plane model not loaded, using the built-in toy plane.",
-      error,
-    ),
-  );
+  const fitPhysicsToPlane = () => {
+    if (!state) return;
+    state.gearDrop = plane.gearDrop;
+    state.groundPitchMax = plane.groundPitchMax;
+    // Sit on the wheels right away (spawns are authored for the toy plane's gear).
+    if (state.grounded && plane.gearDrop !== undefined && !state.hasFlown) {
+      state.position.y =
+        state.grounded.y + 0.033 + plane.gearDrop * state.gearExtension;
+      plane.root.position.copy(state.position);
+    }
+  };
+  loadPlaneModel(plane, PLANE_MODEL_URL)
+    .then(fitPhysicsToPlane)
+    .catch((error) =>
+      console.warn(
+        "Plane model not loaded, using the built-in toy plane.",
+        error,
+      ),
+    );
   const camera = new THREE.PerspectiveCamera(
     66,
     innerWidth / innerHeight,
@@ -241,6 +254,7 @@ function start() {
 
   function restart(silent = false) {
     state = createFlightState(room.spawn, spawnPad, room.spawnYaw || 0);
+    fitPhysicsToPlane();
     crashFX.reset();
     smoke.reset();
     crashDelay = false;

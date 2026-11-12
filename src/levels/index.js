@@ -1,7 +1,7 @@
-import livingRoom from "./livingRoom.js?v=6";
-import frontLawn from "./frontLawn.js?v=6";
-import toyRoom from "./toyRoom.js?v=6";
-import parkingLot from "./parkingLot.js?v=6";
+import livingRoom from "./livingRoom.js?v=7";
+import frontLawn from "./frontLawn.js?v=7";
+import toyRoom from "./toyRoom.js?v=7";
+import parkingLot from "./parkingLot.js?v=7";
 
 /**
  * Every level is a plain module: { id, name, short, tagline, icon, heroTitle,

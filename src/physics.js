@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three.module.js";
-import { interactBalls } from "./balls.js?v=6";
+import { interactBalls } from "./balls.js?v=7";
 
 export const GRAVITY = 2.3; // deliberately toy-like: easier than full earth gravity at this scale
 export const GEAR_CLEARANCE = 0.068;
@@ -260,7 +260,7 @@ export function stepFlight(s, input, dt, room, events = {}) {
   s.pitch = clamp(
     s.pitch + (input.pitch * 1.8 - s.pitch * (grounded ? 1.2 : 0.55)) * dt,
     grounded ? -0.06 : -0.67,
-    0.67,
+    grounded ? (s.groundPitchMax ?? 0.67) : 0.67,
   );
   s.roll = clamp(
     s.roll + (input.roll * 1.85 - s.roll * (input.roll ? 0.15 : 1.35)) * dt,
@@ -277,7 +277,7 @@ export function stepFlight(s, input, dt, room, events = {}) {
   const forward = FORWARD.clone().applyQuaternion(s.quaternion),
     up = UP.clone().applyQuaternion(s.quaternion);
   const previous = s.position.clone(),
-    clearance = 0.033 + 0.035 * s.gearExtension;
+    clearance = 0.033 + (s.gearDrop ?? 0.035) * s.gearExtension;
   const speed = s.velocity.length();
   const flatForward = new THREE.Vector3(forward.x, 0, forward.z).normalize();
   if (grounded) {
