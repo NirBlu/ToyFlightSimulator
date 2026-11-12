@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three.module.js";
-import { interactBalls } from "./balls.js?v=5";
+import { interactBalls } from "./balls.js?v=6";
 
 export const GRAVITY = 2.3; // deliberately toy-like: easier than full earth gravity at this scale
 export const GEAR_CLEARANCE = 0.068;

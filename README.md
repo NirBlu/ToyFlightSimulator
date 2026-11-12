@@ -106,26 +106,29 @@ Flight school appears on first load, progresses as you perform the actions, has 
 
 World units are meters: a **0.32 m** plane. Arcade physics uses reduced effective gravity, speed / angle-of-attack lift, parasite and induced drag, bank-assisted turns, sideslip assistance, stalls, flaps, and gear drag. It is a playful approximation, not a real flight-training tool. See **Land anywhere, and damage** above for landings and bumps.
 
-Crashes separate the fuselage, left wing, right wing, tail, propeller and three gear assemblies into tumbling debris, with orange fire particles, expanding smoke and a brief bright flash. The retry overlay waits a moment so the explosion is visible; **R** or **TRY AGAIN** resets an intact plane. No gore or real-world violence.
+Crashes break the plane into tumbling debris (with Nir's 737: nose, fuselage, both wings with their engines, tail and the three gear legs; with the built-in toy plane: fuselage, wings, tail, propeller and gear), with orange fire particles, expanding smoke and a brief bright flash. The retry overlay waits a moment so the explosion is visible; **R** or **TRY AGAIN** resets an intact plane. No gore or real-world violence.
 
 ## Model swap hooks
 
-Put assets in **`public/models/`**. Under Vite they are served at `/models/…`; with `python -m http.server` use `./public/models/…` as the URL. All geometry should use **meters**, **+Y up**, plane **nose along -Z**, with origin at the center of gravity. The physics / collision shape remains independent from render meshes.
+All geometry should use **meters**, **+Y up**, plane **nose along -Z**, with origin at the center of gravity (the plane loader fixes orientation and size for you). The physics / collision shape stays independent from render meshes, so swapping models never changes how the plane flies.
 
-### Plane
+### Plane (Nir's model)
 
-`src/plane.js` exports `createPlane()`, `animatePlane()` and `loadPlaneModel()`:
+The main plane is **`models/plane.glb`** (Nir's KLM 737, exported from Blender). `models/` sits next to `index.html`, so `python -m http.server` finds it at `./models/plane.glb`, and `npm run build` copies it to `dist/models/` (a tiny plugin in `vite.config.js`), so the built game uses the same URL.
 
-```js
-// In src/main.js, import loadPlaneModel and call after createPlane():
-loadPlaneModel(plane, "/models/my-plane.glb", { scale: 1 }).catch(
-  console.error,
-);
-```
+On startup `src/main.js` calls `loadPlaneModel(plane, PLANE_MODEL_URL)`; the settings live in `NIR_PLANE` in `src/plane.js`:
 
-The loader hides the primitive rig and shows your GLTF/GLB; it does **not** automatically bind its propeller, gear or flap bones. Adapt `animatePlane()` to your named model parts for those animations. The primitive semantic-part rig is retained as fallback crash debris; to break your custom model apart, populate `plane.pieces` with its named components and update the crash visual handling. Default groups: `Fuselage`, `LeftWing`, `RightWing`, `Tail`, `Propeller`, `Gear0..2`.
+- **Removed nodes:** anything named like `*wheel*` (`leftwheel`, `righwheel`, `frontwheel`). Those wheels were exported with the same origin as the body (all three sit stacked under the middle of the plane), so they can't spin or retract properly. The game's own animated gear (`G`) is mounted in their place instead.
+- **Orientation / size:** rotated 180° around Y (it was exported nose toward +Z), scaled uniformly to a **0.317 m** wingspan (scale ≈ 0.0112, length ≈ 0.338 m), centered left/right, origin a bit ahead of the wing root, and lifted so the engine nacelles (its lowest point) sit exactly at the gear-up belly height the physics uses.
+- **Gear:** dual-wheel main legs under each wing root (x = ±0.022 m, just inboard of the engines, retracting inward) and a dual-wheel nose leg under the nose (z = -0.126 m, retracting forward). Strut tops are found by raycasting up to the skin (they reach into the model's wheel wells), and wheel bottoms sit exactly on the ground the physics uses (0.068 m below the origin).
+- **Crash:** the body is split into `Nose`, `Fuselage`, `LeftWing`, `RightWing` and `Tail` pieces at load time, which become the crash debris along with the gear.
+- **Fallback:** if the file is missing or fails to load, the built-in primitive toy plane keeps flying (a warning goes to the console, nothing breaks).
+
+To use a different plane, replace `models/plane.glb` (or point `PLANE_MODEL_URL` elsewhere) and adjust `NIR_PLANE` (`rotateY`, `wingspan`, `cgFromNose`, `gear` positions). If you want your own wheels to animate later, export each wheel as its own object with its **origin at the wheel's axle** (for a gear leg, at the hinge where it meets the body); then they can be rotated in `animatePlane()` instead of being removed.
 
 ### Furniture
+
+Put furniture `.glb` files in `models/` too, so the same `./models/…` URL works with `python -m http.server` and in `dist/`.
 
 Every level (`src/levels/*.js`) returns `furniture`, `architecture`, **`colliders`**, **`pads`**, `balls`, `spawn` and `bounds`. `loadFurnitureModel(level, url, { scale: 1 })` from `src/room.js` works with any level and replaces the entire primitive furniture visual group, while retaining the room shell and collision data. It also hides the old pad visuals, so recreate the pad decals in your model / a separate overlay group. Alternatively swap individual meshes inside `room.furniture` to preserve pad markers.
 
@@ -144,19 +147,20 @@ src/levels/index.js    The level list (add new levels here)
 src/levels/*.js        Living Room, Front Lawn, Toy Room, Parking Lot
 src/levels/builder.js  Primitive / collider / pad / ball / sky helpers for levels
 src/room.js            Original living-room furniture + loadFurnitureModel hook
-src/plane.js           Primitive plane, animations, GLTF loader hook
+src/plane.js           Primitive fallback plane, gear/flap animation, GLB plane loader
 src/physics.js         Flight, land-anywhere touchdowns, damage, bumps, bounds
 src/balls.js           Bouncy ball physics and plane-ball pushes (no damage)
 src/effects.js         Damage smoke trail
 src/controls.js        Pointer lock, virtual stick, springs, key input
 src/tutorial.js        Seven short, skippable takeoff / landing lessons
-src/crash.js           Semantic-part debris, fire, smoke, light flash
+src/crash.js           Plane-piece debris, fire, smoke, light flash
 src/ui.js              Instruments, damage meter, radar, level picker, menus
 src/style.css          Responsive warm cockpit-style overlay
 vendor/                Three.js r187 + the few addons used (relative imports only)
-public/models/         Your future .glb / .gltf assets
+models/plane.glb       Nir's plane (served as ./models/ raw and from dist/)
+public/models/         Vite public dir; put new .glb files in models/ instead
 tests/                 Node built-in tests (flight, damage, balls, levels, imports)
-vite.config.js         Relative base and vendor chunk
+vite.config.js         Relative base, vendor chunk, copies models/ into dist/
 ```
 
 ### Notes / limits

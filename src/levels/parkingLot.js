@@ -4,7 +4,7 @@ import {
   addSky,
   canvasTexture,
   pulsePads,
-} from "./builder.js?v=5";
+} from "./builder.js?v=6";
 
 /** A huge sunny parking lot: rows of parked cars, a van, a box truck runway, poles and a store. */
 export default {

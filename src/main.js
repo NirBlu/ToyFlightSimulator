@@ -1,13 +1,18 @@
 import * as THREE from "../vendor/three.module.js";
-import { createPlane, animatePlane } from "./plane.js?v=5";
-import { Controls } from "./controls.js?v=5";
-import { createFlightState, stepFlight } from "./physics.js?v=5";
-import { stepBalls, syncBallMeshes } from "./balls.js?v=5";
-import { CrashEffects } from "./crash.js?v=5";
-import { DamageSmoke } from "./effects.js?v=5";
-import { Tutorial } from "./tutorial.js?v=5";
-import { UI } from "./ui.js?v=5";
-import { LEVELS, getLevel } from "./levels/index.js?v=5";
+import {
+  createPlane,
+  animatePlane,
+  loadPlaneModel,
+  PLANE_MODEL_URL,
+} from "./plane.js?v=6";
+import { Controls } from "./controls.js?v=6";
+import { createFlightState, stepFlight } from "./physics.js?v=6";
+import { stepBalls, syncBallMeshes } from "./balls.js?v=6";
+import { CrashEffects } from "./crash.js?v=6";
+import { DamageSmoke } from "./effects.js?v=6";
+import { Tutorial } from "./tutorial.js?v=6";
+import { UI } from "./ui.js?v=6";
+import { LEVELS, getLevel } from "./levels/index.js?v=6";
 
 const canvas = document.querySelector("#game");
 try {
@@ -60,6 +65,13 @@ function start() {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.25;
   const plane = createPlane();
+  // Nir's GLB plane; if it can't load, the built-in toy plane keeps flying.
+  loadPlaneModel(plane, PLANE_MODEL_URL).catch((error) =>
+    console.warn(
+      "Plane model not loaded, using the built-in toy plane.",
+      error,
+    ),
+  );
   const camera = new THREE.PerspectiveCamera(
     66,
     innerWidth / innerHeight,

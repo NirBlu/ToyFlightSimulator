@@ -89,3 +89,22 @@ test("gear and flaps animate, propeller responds, and crash separates eight sema
   assert.equal(effects.particles.length, 0);
   assert.equal(plane.root.visible, true);
 });
+test("Nir's plane model ships next to index.html and its gear retracts on its own axis", async () => {
+  const { PLANE_MODEL_URL, NIR_PLANE } = await import("../src/plane.js");
+  const { existsSync } = await import("node:fs");
+  assert.match(PLANE_MODEL_URL, /^\.\/models\/.+\.glb$/);
+  assert.ok(existsSync(PLANE_MODEL_URL), `${PLANE_MODEL_URL} is missing`);
+  assert.equal(NIR_PLANE.gear.length, 3);
+  const plane = createPlane();
+  const g = new THREE.Group();
+  g.userData.retract = { axis: "x", angle: 1.45 };
+  plane.gears = [g];
+  for (let i = 0; i < 120; i++)
+    animatePlane(
+      plane,
+      { throttle: 0, gearDown: false, flapsDown: false },
+      1 / 120,
+    );
+  assert.ok(g.rotation.x > 1.4 && g.rotation.z === 0);
+  assert.equal(g.visible, false);
+});
