@@ -4,31 +4,31 @@ import {
   animatePlane,
   loadPlaneModel,
   PLANE_MODEL_URL,
-} from "./plane.js?v=11";
-import { Controls } from "./controls.js?v=11";
+} from "./plane.js?v=12";
+import { Controls } from "./controls.js?v=12";
 import {
   createFlightState,
   stepFlight,
   toggleAntiGrav,
   findNearestSurface,
   ANTI_GRAV_RANGE,
-} from "./physics.js?v=11";
+} from "./physics.js?v=12";
 import {
   STEP,
   advanceFixed,
   Pose,
   interpolatePose,
   snapToTexel,
-} from "./loop.js?v=11";
-import { ChaseCamera } from "./camera.js?v=11";
-import { stepBalls, syncBallMeshes } from "./balls.js?v=11";
-import { CrashEffects } from "./crash.js?v=11";
-import { DamageSmoke } from "./effects.js?v=11";
-import { Tutorial } from "./tutorial.js?v=11";
-import { UI } from "./ui.js?v=11";
-import { GamepadInput, padLabel } from "./gamepad.js?v=11";
-import { GamepadPanel } from "./gamepadPanel.js?v=11";
-import { LEVELS, getLevel } from "./levels/index.js?v=11";
+} from "./loop.js?v=12";
+import { ChaseCamera } from "./camera.js?v=12";
+import { stepBalls, syncBallMeshes } from "./balls.js?v=12";
+import { CrashEffects } from "./crash.js?v=12";
+import { DamageSmoke } from "./effects.js?v=12";
+import { Tutorial } from "./tutorial.js?v=12";
+import { UI } from "./ui.js?v=12";
+import { GamepadInput, padLabel } from "./gamepad.js?v=12";
+import { GamepadPanel } from "./gamepadPanel.js?v=12";
+import { LEVELS, getLevel } from "./levels/index.js?v=12";
 
 const canvas = document.querySelector("#game");
 try {

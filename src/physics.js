@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three.module.js";
-import { interactBalls } from "./balls.js?v=11";
+import { interactBalls } from "./balls.js?v=12";
 
 export const GRAVITY = 2.3; // deliberately toy-like: easier than full earth gravity at this scale
 export const GEAR_CLEARANCE = 0.068;
@@ -18,6 +18,14 @@ export const LANDING_LIMITS = {
 export const MIN_LANDABLE = 0.1;
 /** Body rotation rates (rad/s) at full stick / full A-D. No angle limits in the air. */
 export const RATES = { pitch: 1.8, roll: 2.6, yaw: 1.65 };
+/**
+ * Nose up / down limit in flight (radians of nose elevation above the horizon
+ * of the current gravity frame, so it also works on anti-grav walls / ceiling).
+ * 55°: steep climbs and dives, but no loops. The pilot's pitch rate fades out
+ * over the last PITCH_SOFT before the limit, so it eases in without a snap.
+ */
+export const PITCH_LIMIT = 0.96;
+export const PITCH_SOFT = 0.3;
 /** Anti-gravity (V): how close a wall / ceiling / side must be, and when it lets go. */
 export const ANTI_GRAV_RANGE = 1.5;
 export const ANTI_GRAV_RELEASE = 3.2;
@@ -261,6 +269,21 @@ function noseDown(s, angle) {
   if (len < 0.05 || angle <= 0) return;
   _dq.setFromAxisAngle(axis.divideScalar(len), angle);
   s.quaternion.premultiply(_dq);
+}
+/** Safety net: never let the nose get past the pitch limit (no loops). */
+function limitNoseElevation(q) {
+  const f = _a.copy(FORWARD).applyQuaternion(q);
+  const elev = Math.asin(clamp(f.y, -1, 1));
+  const max = PITCH_LIMIT + 0.02;
+  const excess = Math.abs(elev) - max;
+  if (excess <= 0) return;
+  // Horizontal axis across the nose: rotating about it changes elevation only.
+  const axis = _b.set(-f.z, 0, f.x);
+  const len = axis.length();
+  if (len < 1e-6) return;
+  // Positive angle about (f × UP) raises the nose; f × UP = (-f.z, 0, f.x).
+  _dq.setFromAxisAngle(axis.divideScalar(len), -Math.sign(elev) * excess);
+  q.premultiply(_dq);
 }
 function pitchAngle(q) {
   const f = _a.copy(FORWARD).applyQuaternion(q);
@@ -713,10 +736,20 @@ function core(s, input, dt, room, events) {
       up = new THREE.Vector3().copy(UP).applyQuaternion(q),
       right = new THREE.Vector3().copy(RIGHT).applyQuaternion(q);
     // Body rates: pitch about local X, yaw about local Y, roll about local Z.
-    // No angle limits, so full loops and rolls just keep going.
+    // Rolls are unlimited; nose elevation is limited to ±PITCH_LIMIT (no loops).
     let wx = ip * RATES.pitch,
       wy = -iy * RATES.yaw,
       wz = ir * RATES.roll;
+    {
+      // How fast each input would raise the nose above the horizon:
+      // pitch about `right` moves fwd by wx·(right×fwd), yaw about `up` by wy·(up×fwd).
+      const elev = Math.asin(clamp(fwd.y, -1, 1));
+      const roomUp = clamp((PITCH_LIMIT - elev) / PITCH_SOFT, 0, 1);
+      const roomDown = clamp((PITCH_LIMIT + elev) / PITCH_SOFT, 0, 1);
+      const fade = (rate) => (rate > 0 ? roomUp : rate < 0 ? roomDown : 1);
+      wx *= fade(wx * (right.z * fwd.x - right.x * fwd.z));
+      wy *= fade(wy * (up.z * fwd.x - up.x * fwd.z));
+    }
     // Gentle auto-level, only on an axis the pilot has let go of, and never
     // while they are pulling through a loop (pitching while not upright).
     const rollK = THREE.MathUtils.smoothstep(s.rollIdle, 0.25, 0.7);
@@ -757,6 +790,7 @@ function core(s, input, dt, room, events) {
       }
     }
     q.normalize();
+    limitNoseElevation(q);
     fwd.copy(FORWARD).applyQuaternion(q);
     up.copy(UP).applyQuaternion(q);
     const along = s.velocity.dot(fwd);

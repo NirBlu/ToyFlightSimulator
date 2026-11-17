@@ -6,6 +6,7 @@ import {
   stepFlight,
   setGravity,
   RATES,
+  PITCH_LIMIT,
 } from "../src/physics.js";
 import { Controls } from "../src/controls.js";
 
@@ -78,13 +79,25 @@ test("hands off, the swing still turns the belly to the new floor", () => {
   assert.ok(up.y > 0.9, `upright again (up.y=${up.y.toFixed(2)})`);
 });
 
-test("once the swing is done it never holds the nose again", () => {
+test("once the swing is done it never holds the nose again: pull-up reaches the limit", () => {
   const room = open(),
     s = cruising();
   setGravity(s, V(0, 1, 0), null);
   for (let i = 0; i < 30; i++) stepFlight(s, {}, h, room, {});
   const turned = pitchedThrough(s, room, 120);
-  assert.ok(turned > 0.9 * RATES.pitch, `full pitch rate (${turned.toFixed(2)} rad in 1 s)`);
+  assert.ok(turned > PITCH_LIMIT - 0.12, `nose came all the way up (${turned.toFixed(2)} rad in 1 s)`);
+  const f = V(0, 0, -1).applyQuaternion(s.quaternion);
+  assert.ok(Math.asin(f.y) > PITCH_LIMIT - 0.12 && Math.asin(f.y) < PITCH_LIMIT + 0.03);
+});
+
+test("pull-up on an anti-grav wall is limited against the wall, not world up", () => {
+  const room = open(),
+    s = cruising(3, 1.4);
+  setGravity(s, V(1, 0, 0), { kind: "wall", name: "the west wall" });
+  for (let i = 0; i < 120 * 3; i++) stepFlight(s, { pitch: 1, throttleUp: true }, h, room, {});
+  const f = V(0, 0, -1).applyQuaternion(s.quaternion);
+  const elev = Math.asin(THREE.MathUtils.clamp(f.dot(s.gravUp), -1, 1));
+  assert.ok(elev > 0.5 && elev < PITCH_LIMIT + 0.03, `elevation off the wall ${elev.toFixed(2)}`);
 });
 
 test("full back stick pitches at full rate in every ordinary flight state", () => {

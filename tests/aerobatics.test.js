@@ -5,6 +5,7 @@ import {
   createFlightState,
   stepFlight,
   assessTouchdown,
+  PITCH_LIMIT,
 } from "../src/physics.js";
 import { ChaseCamera } from "../src/camera.js";
 import { Pose } from "../src/loop.js";
@@ -40,53 +41,58 @@ const finite = (s) =>
     s.quaternion.w,
   ].every(Number.isFinite);
 
-test("holding the stick back flies a complete 360° loop at full throttle", () => {
+const elevation = (s) => Math.asin(THREE.MathUtils.clamp(axis(s, 0, 0, -1).y, -1, 1));
+
+test("holding full pull-up for 5 s climbs steeply but never loops", () => {
   const room = open(),
-    s = cruising();
-  const cam = new ChaseCamera(new THREE.PerspectiveCamera(66, 1.6, 0.02, 100));
-  cam.update(1, s, s, null, true);
-  let turned = 0,
+    s = cruising(3.5, 2);
+  let maxElev = -Infinity,
     maxStep = 0,
-    inverted = false,
-    camInverted = false,
-    minY = Infinity,
-    maxY = -Infinity,
-    prev = axis(s, 0, 0, -1);
-  for (let i = 0; i < 120 * 8 && turned < 2 * Math.PI; i++) {
-    stepFlight(
-      s,
-      { pitch: 1, yaw: 0, roll: 0, throttleUp: true },
-      1 / 120,
-      room,
-    );
-    cam.update(1 / 120, new Pose().copyFrom(s), s, null);
+    prev = axis(s, 0, 0, -1),
+    turned = 0;
+  for (let i = 0; i < 120 * 5; i++) {
+    stepFlight(s, { pitch: 1, yaw: 0, roll: 0, throttleUp: true }, 1 / 120, room);
     assert.ok(finite(s), "no NaN");
     const f = axis(s, 0, 0, -1);
     const d = prev.angleTo(f);
     turned += d;
     maxStep = Math.max(maxStep, d);
     prev = f;
-    if (axis(s, 0, 1, 0).y < -0.95) inverted = true;
-    if (cam.camera.up.y < -0.5) camInverted = true;
-    minY = Math.min(minY, s.position.y);
-    maxY = Math.max(maxY, s.position.y);
+    const e = elevation(s);
+    maxElev = Math.max(maxElev, e);
+    assert.ok(e <= PITCH_LIMIT + 0.03, `nose ${((e * 180) / Math.PI).toFixed(1)}° stays under the limit`);
+    assert.ok(axis(s, 0, 1, 0).y > 0, "never goes over the top (no inverted loop)");
   }
-  assert.ok(
-    turned >= 2 * Math.PI,
-    `nose went all the way round (${((turned * 180) / Math.PI).toFixed(0)}°)`,
-  );
-  assert.ok(inverted, "upside down over the top");
-  assert.ok(camInverted, "chase camera rolled over with the plane");
-  assert.ok(maxStep < 0.03, "orientation is continuous: no flips");
-  assert.ok(
-    maxY - minY > 1.5 && maxY - minY < 6,
-    `loop height ${(maxY - minY).toFixed(2)} m fits the big levels`,
-  );
+  assert.ok(maxElev > PITCH_LIMIT - 0.08, `reached the limit (${((maxElev * 180) / Math.PI).toFixed(0)}°)`);
+  assert.ok(turned < Math.PI, "nowhere near a full loop");
+  assert.ok(maxStep < 0.03, "smooth: no snaps at the limit");
   assert.equal(s.crashed, false);
-  assert.equal(s.grounded, null);
-  // Back out the bottom flying level-ish and still fast enough to fly.
-  assert.ok(axis(s, 0, 1, 0).y > 0.9);
-  assert.ok(s.velocity.length() > 1, "kept its energy");
+});
+
+test("pitch limit: full push-down stops at the dive limit; inverted pulls stay limited too", () => {
+  const s = cruising(8, 2);
+  for (let i = 0; i < 120 * 3; i++) {
+    stepFlight(s, { pitch: -1, yaw: 0, roll: 0 }, 1 / 120, open());
+    assert.ok(elevation(s) >= -PITCH_LIMIT - 0.03);
+  }
+  // Roll inverted, then pull: nose drops toward the ground but stops at the limit.
+  const t = cruising(12, 2);
+  t.quaternion.setFromEuler(new THREE.Euler(0, 0, Math.PI, "YXZ"));
+  t._e = null;
+  for (let i = 0; i < 120 * 3; i++) {
+    stepFlight(t, { pitch: 1, yaw: 0, roll: 0, throttleUp: true }, 1 / 120, open());
+    assert.ok(Math.abs(elevation(t)) <= PITCH_LIMIT + 0.03, "inverted pull is limited too");
+  }
+});
+
+test("stick + yaw at a knife edge cannot sneak the nose past the limit", () => {
+  const s = cruising(6, 2);
+  s.quaternion.setFromEuler(new THREE.Euler(0, 0, Math.PI / 2, "YXZ"));
+  s._e = null;
+  for (let i = 0; i < 120 * 3; i++) {
+    stepFlight(s, { pitch: 1, yaw: 1, roll: 0, throttleUp: true }, 1 / 120, open());
+    assert.ok(Math.abs(elevation(s)) <= PITCH_LIMIT + 0.03);
+  }
 });
 
 test("holding A or D rolls through 360° and beyond without clamping or losing much height", () => {

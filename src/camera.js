@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three.module.js";
-import { headingOf } from "./physics.js?v=11";
+import { headingOf } from "./physics.js?v=12";
 
 const BACK = new THREE.Vector3(0, 0.34, 0.83),
   LOOK = new THREE.Vector3(0, 0.06, -0.24),

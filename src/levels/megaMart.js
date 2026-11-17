@@ -1,5 +1,5 @@
 import * as THREE from "../../vendor/three.module.js";
-import { createBuilder, canvasTexture, pulsePads } from "./builder.js?v=11";
+import { createBuilder, canvasTexture, pulsePads } from "./builder.js?v=12";
 
 /**
  * Mega Mart: a big-box store interior (30 × 40 m, 7.5 m ceiling).

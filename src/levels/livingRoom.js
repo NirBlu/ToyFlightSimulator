@@ -1,4 +1,4 @@
-import { createRoom } from "../room.js?v=11";
+import { createRoom } from "../room.js?v=12";
 
 /** The original living room, unchanged, now with land-anywhere floor and padded walls. */
 export default {

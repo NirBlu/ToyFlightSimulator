@@ -1,4 +1,4 @@
-import { padLabel, resolveBindings, resolveButtons } from "./gamepad.js?v=11";
+import { padLabel, resolveBindings, resolveButtons } from "./gamepad.js?v=12";
 
 const PROMPTS = {
   pitch: "PITCH: pull the stick all the way BACK (toward you)…",

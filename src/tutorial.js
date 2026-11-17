@@ -35,9 +35,9 @@ const lessons = [
     "Gentle nose up · S to brake",
   ],
   [
-    "Tricks: loops, rolls & anti-grav!",
-    "Full power, then keep pulling the mouse toward you for a whole LOOP. Hold A or D for a barrel ROLL. Fly close to a wall or the ceiling and press V: gravity flips and you can land on it, upside down! Press V again to let go.",
-    "V near a wall or ceiling · keep pulling = loop",
+    "Tricks: rolls & anti-grav!",
+    "Hold A or D for a full barrel ROLL. Pull up for a steep climb: the nose stops at a safe angle, so you can't flip over backwards. Fly close to a wall or the ceiling and press V: gravity flips and you can land on it, upside down! Press V again to let go.",
+    "V near a wall or ceiling · hold A / D = roll",
   ],
 ];
 export class Tutorial {
