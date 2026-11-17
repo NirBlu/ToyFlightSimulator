@@ -33,18 +33,21 @@ Do not open `index.html` directly with `file://` (browsers block modules there).
 
 ## Levels
 
-Pick a level on the start / pause menu (click a card or press **1–4**). Press **L** at any time (flying, paused or after a crash) to come back to the level picker. The last level you chose is remembered; `?level=toy-room` in the URL also works.
+Pick a level on the start / pause menu (click a card or press **1–5**). Press **L** at any time (flying, paused or after a crash) to come back to the level picker. The last level you chose is remembered; `?level=toy-room` in the URL also works.
 
-| #   | Level           | What’s there                                                                                                                                                                                                                                                |
-| --- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Living Room** | The original 6 × 8 m room: dining-table runway, couch arms, coffee table, bookcase, TV. Walls are padded now (bumps = damage) and the floor is landable.                                                                                                    |
-| 2   | **Front Lawn**  | ~36 × 30 m sunny yard: picnic-table runway, stone wall with gate pillars, patio (table, four chairs, sun lounger, umbrella, BBQ, flower pots), front porch + porch roof, house, mailbox, garden bench, trampoline, doghouse, trees.                         |
-| 3   | **Toy Room**    | 8 × 10 m playroom: big bed runway, raised toy race track, toy chest, kids table + chairs, cubby shelf, bookcase, block tower, rocking horse, teepee, ball pit, and **18 bouncy balls** of many sizes.                                                       |
-| 4   | **Parking Lot** | ~44 × 52 m lot: box-truck roof runway, four rows of parked cars (landable hoods and roofs), a white van and a blue van, light poles, planter islands with trees, cart corral, cones, a painted helipad, and the Toy Mart storefront with a landable awning. |
+| #   | Level           | What’s there                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| --- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Living Room** | The original 6 × 8 m room: dining-table runway, couch arms, coffee table, bookcase, TV. Walls are padded now (bumps = damage) and the floor is landable.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 2   | **Front Lawn**  | ~36 × 30 m sunny yard: picnic-table runway, stone wall with gate pillars, patio (table, four chairs, sun lounger, umbrella, BBQ, flower pots), front porch + porch roof, house, mailbox, garden bench, trampoline, doghouse, trees.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 3   | **Toy Room**    | 8 × 10 m playroom: big bed runway, raised toy race track, toy chest, kids table + chairs, cubby shelf, bookcase, block tower, rocking horse, teepee, ball pit, and **18 bouncy balls** of many sizes.                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 4   | **Parking Lot** | ~44 × 52 m lot: box-truck roof runway, four rows of parked cars (landable hoods and roofs), a white van and a blue van, light poles, planter islands with trees, cart corral, cones, a painted helipad, and the Toy Mart storefront with a landable awning.                                                                                                                                                                                                                                                                                                                                                                                 |
+| 5   | **Mega Mart**   | 30 × 40 m big-box store with a 7.5 m ceiling: six long shelving aisles stocked with thousands of colorful boxes, bags, cans and bottles (shelf tops are 16 m runways), end-cap SALE displays, hanging aisle signs, five checkout lanes with moving belts, registers and candy racks, freezer cases with glass doors and two chest freezers, a produce section with fruit piles, a watermelon bin and a banana stand, pallets and a soda-can pyramid, shopping carts (land in the basket!), a Quick Stop convenience corner (coffee, slushies, hot dogs, snack rack, café tables), columns, ceiling light strips and sliding entrance doors. |
 
 Outdoor levels have soft edges: fly to the edge and the plane is gently turned around (no damage). Indoor levels have walls and a ceiling that you can bump.
 
 Each level has several glowing **suggested** landing pads (pad landings earn a ★ bonus) and a ◎ marker pointing at a goal, but you never need a pad.
+
+The Mega Mart's products are `InstancedMesh`es (a few draw calls for ~3,500 items) and do not cast shadows; its "store lights" are one overhead shadow light that follows the plane.
 
 ### Bouncy balls
 
@@ -63,25 +66,39 @@ Bumping furniture, walls, trees, cars, etc. pushes the plane back and adds damag
 
 The **DAMAGE** meter on the HUD shows 0–100%. Above 50% the plane trails smoke; every hit gives a red flash and a little camera shake. Damage resets on restart (**R**) or when changing levels.
 
+## Loops, rolls and anti-grav
+
+**Aerobatics.** The plane's attitude is a quaternion rotated in its own body axes (pitch about the wings, roll about the fuselage, yaw about the vertical fin), so there are no angle limits and no gimbal flips. Keep pulling the mouse toward you at full power and it flies a complete **loop** (about 3–4 m tall, so use the Front Lawn, Parking Lot or Mega Mart); hold **A** or **D** for a full **barrel roll** and keep going. The wing's lift follows the side facing the sky, so rolls lose very little height and you can fly upside down. Auto-level is gentle and only kicks in on an axis you have let go of (never while you are pulling through a loop). The chase camera stays calm in normal flight and blends into the plane's own frame when you are steep or inverted, so the view rolls and loops with you.
+
+**Anti-grav (V).** Fly within **1.5 m** of a wall, the ceiling, or the side or underside of anything solid (a bookcase, a shelf, an aisle sign, the side of the house…). A hint pill says `PRESS V · ANTI-GRAV ONTO THE NORTH WALL`. Press **V** and gravity swings toward that surface: the plane turns its belly to it, a soft magnet settles you down (fall speed toward it is capped and thrust is reduced until you touch down), and the camera's "up" swings smoothly with it. Landings, damage and land-anywhere all work on the new surface exactly like on the floor, and the toast names it (_Nice landing on the ceiling!_, _the north wall_, _the side of the house_). Taxi and take off from it upside down or sideways. Press **V** again to get normal gravity back (the plane flips upright and floats down gently), or just fly more than ~3 m away from the surface and it lets go by itself. With nothing in range V shows _No surface close enough_. Outdoors there is no ceiling, but walls of objects work. **R** resets it.
+
+Internally, every surface is an axis-aligned box, so each gravity direction is a 90° rotation of the whole level: physics runs the normal flight model in that rotated frame (`frameRoom()` in `src/physics.js`).
+
+## Smooth motion
+
+Physics runs at a fixed 120 Hz. The plane (and the bouncy balls) are drawn **interpolated** between the last two physics steps (`src/loop.js`), and the chase camera follows that interpolated pose, so the plane no longer stutters on 60 / 144 Hz screens. The outdoor shadow camera that follows the plane snaps to whole shadow-map texels, so shadows do not shimmer.
+
 ## Controls
 
-| Control                              | Action                                                                 |
-| ------------------------------------ | ---------------------------------------------------------------------- |
-| **W** (hold)                         | Increase throttle                                                      |
-| **S** (hold)                         | Reduce throttle; wheel brakes when grounded                            |
-| **A / D**                            | Roll left / right; gentle steering on the ground                       |
-| **Mouse toward you** (positive Y)    | Pull back / nose up                                                    |
-| **Mouse away from you** (negative Y) | Push forward / nose down                                               |
-| **Mouse left / right**               | Yaw left / right                                                       |
-| **G**                                | Toggle landing gear (animated; retraction is protected while grounded) |
-| **F**                                | Toggle flaps: extra lift and drag, lower stall speed                   |
-| **R**                                | Restart at the level’s start spot, including from pause / crash        |
-| **L / Levels button**                | Open the level picker (works while flying, paused or crashed)          |
-| **1 – 4** (in the menu)              | Pick Living Room / Front Lawn / Toy Room / Parking Lot                 |
-| **Click game / LET’S FLY**           | Capture mouse and resume                                               |
-| **Esc**                              | Release mouse and pause                                                |
-| **H / Flight school**                | Replay or hide tutorial                                                |
-| **Enter / Skip**                     | Dismiss tutorial                                                       |
+| Control                               | Action                                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------- |
+| **W** (hold)                          | Increase throttle                                                                     |
+| **S** (hold)                          | Reduce throttle; wheel brakes when grounded                                           |
+| **A / D**                             | Roll left / right; gentle steering on the ground                                      |
+| **Mouse toward you** (positive Y)     | Pull back / nose up                                                                   |
+| **Mouse away from you** (negative Y)  | Push forward / nose down                                                              |
+| **Mouse left / right**                | Yaw left / right                                                                      |
+| **G**                                 | Toggle landing gear (animated; retraction is protected while grounded)                |
+| **F**                                 | Toggle flaps: extra lift and drag, lower stall speed                                  |
+| **V**                                 | Anti-grav: stick to the nearest wall / ceiling / side (within 1.5 m); V again lets go |
+| **Keep pulling the mouse / hold A-D** | Full loops and rolls (no angle limits)                                                |
+| **R**                                 | Restart at the level’s start spot, including from pause / crash                       |
+| **L / Levels button**                 | Open the level picker (works while flying, paused or crashed)                         |
+| **1 – 5** (in the menu)               | Pick Living Room / Front Lawn / Toy Room / Parking Lot / Mega Mart                    |
+| **Click game / LET’S FLY**            | Capture mouse and resume                                                              |
+| **Esc**                               | Release mouse and pause                                                               |
+| **H / Flight school**                 | Replay or hide tutorial                                                               |
+| **Enter / Skip**                      | Dismiss tutorial                                                                      |
 
 W/S is intentional: the original request mentioned A twice; A/D remains roll.
 
@@ -142,24 +159,26 @@ Copy one of `src/levels/*.js`, build it with the helpers in `src/levels/builder.
 
 ```text
 index.html             HUD, menus, level picker, tutorial, keyboard help
-src/main.js            Renderer, level loading, fixed-step loop, chase camera, events
+src/main.js            Renderer, level loading, fixed-step loop, events, V key
+src/loop.js            Fixed-step accumulator, render interpolation, shadow texel snap
+src/camera.js          Chase camera (level / body-frame blend, gravity-aware up)
 src/levels/index.js    The level list (add new levels here)
-src/levels/*.js        Living Room, Front Lawn, Toy Room, Parking Lot
+src/levels/*.js        Living Room, Front Lawn, Toy Room, Parking Lot, Mega Mart
 src/levels/builder.js  Primitive / collider / pad / ball / sky helpers for levels
 src/room.js            Original living-room furniture + loadFurnitureModel hook
 src/plane.js           Primitive fallback plane, gear/flap animation, GLB plane loader
-src/physics.js         Flight, land-anywhere touchdowns, damage, bumps, bounds
+src/physics.js         Quaternion flight, land-anywhere touchdowns, damage, bumps, bounds, anti-grav frames
 src/balls.js           Bouncy ball physics and plane-ball pushes (no damage)
 src/effects.js         Damage smoke trail
 src/controls.js        Pointer lock, virtual stick, springs, key input
-src/tutorial.js        Seven short, skippable takeoff / landing lessons
+src/tutorial.js        Eight short, skippable lessons (takeoff, landing, tricks)
 src/crash.js           Plane-piece debris, fire, smoke, light flash
 src/ui.js              Instruments, damage meter, radar, level picker, menus
 src/style.css          Responsive warm cockpit-style overlay
 vendor/                Three.js r187 + the few addons used (relative imports only)
 models/plane.glb       Nir's plane (served as ./models/ raw and from dist/)
 public/models/         Vite public dir; put new .glb files in models/ instead
-tests/                 Node built-in tests (flight, damage, balls, levels, imports)
+tests/                 Node built-in tests (flight, aerobatics, anti-grav, interpolation, damage, balls, levels, imports)
 vite.config.js         Relative base, vendor chunk, copies models/ into dist/
 ```
 

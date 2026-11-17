@@ -360,6 +360,28 @@ button:disabled {
   padding: 12px 20px;
   border-radius: 7px;
 }
+.antigrav {
+  position: absolute;
+  left: 50%;
+  top: 158px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: #dff9ff;
+  background: #1c4f6ccc;
+  border: 1px solid #7fdcff66;
+  padding: 9px 16px;
+  border-radius: 999px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.antigrav.on {
+  background: #5b2f9ae6;
+  border-color: #d6b4ffaa;
+  color: #fff;
+  box-shadow: 0 0 18px #a77cff88;
+}
 .target-label {
   position: absolute;
   padding: 7px 12px;

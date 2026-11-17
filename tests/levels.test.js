@@ -16,10 +16,10 @@ globalThis.document = {
 };
 const build = (def) => def.create(new THREE.Scene());
 
-test("there are four levels with unique ids and complete environments", () => {
+test("there are five levels with unique ids and complete environments", () => {
   assert.deepEqual(
     LEVELS.map((l) => l.id),
-    ["living-room", "front-lawn", "toy-room", "parking-lot"],
+    ["living-room", "front-lawn", "toy-room", "parking-lot", "mega-mart"],
   );
   for (const l of LEVELS) {
     assert.ok(l.name && l.short && l.tagline && l.objective && l.heroTitle);
@@ -133,4 +133,41 @@ test("Toy Room balls come in many sizes, settle, and stay in the room", () => {
     assert.ok(p.x >= b.minX && p.x <= b.maxX && p.z >= b.minZ && p.z <= b.maxZ);
     assert.ok(ball.velocity.length() < 0.2, `${ball.name} settled`);
   }
+});
+
+test("Mega Mart is a big indoor store with aisles, checkouts, freezers, produce and carts", () => {
+  const def = LEVELS.find((l) => l.id === "mega-mart");
+  const scene = new THREE.Scene();
+  const store = def.create(scene);
+  const b = store.bounds;
+  assert.ok(!b.soft, "indoor: solid walls and ceiling");
+  assert.ok(b.maxX - b.minX >= 28 && b.maxZ - b.minZ >= 38, "about 30 × 40 m");
+  assert.ok(b.maxY >= 7 && b.maxY <= 8, "high ceiling");
+  const names = store.colliders.map((c) => c.name.toLowerCase());
+  const count = (re) => names.filter((n) => re.test(n)).length;
+  assert.ok(count(/ shelf$/) >= 6, "shelving aisles");
+  assert.ok(count(/^checkout \d$/) >= 4, "checkout lanes");
+  assert.ok(count(/freezer/) >= 4, "freezer cases");
+  assert.equal(count(/^shopping cart$/), 8, "shopping carts");
+  assert.ok(count(/pallet/) >= 3, "pallets");
+  assert.ok(count(/table|bin|stand|rack/) >= 4, "produce displays");
+  assert.ok(count(/aisle \d sign/) >= 6, "hanging aisle signs");
+  assert.ok(count(/quick stop counter/) === 1, "convenience corner");
+  assert.ok(store.pads.length >= 6, "suggested pads");
+  // Thousands of products, but only a few instanced draw calls.
+  let instances = 0,
+    instancedMeshes = 0;
+  scene.traverse((o) => {
+    if (o.isInstancedMesh) {
+      instancedMeshes++;
+      instances += o.count;
+      assert.equal(o.castShadow, false, "products do not cast shadows");
+    }
+  });
+  assert.ok(instances > 2500, `products: ${instances}`);
+  assert.ok(instancedMeshes <= 6, `instanced meshes: ${instancedMeshes}`);
+  // Every suggested pad and the spawn shelf top are reachable surfaces.
+  const top = store.colliders.find((c) => c.name === "Cereal and pasta shelf");
+  assert.ok(Math.abs(top.max.y - store.spawn.y + 0.068) < 1e-6);
+  assert.equal(def.name.toLowerCase().includes("walmart"), false);
 });

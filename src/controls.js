@@ -33,6 +33,7 @@ export class Controls {
           "KeyR",
           "KeyH",
           "KeyL",
+          "KeyV",
           "Enter",
           "Space",
         ].includes(e.code)
@@ -40,7 +41,9 @@ export class Controls {
         e.preventDefault();
       if (
         !e.repeat &&
-        (["KeyG", "KeyF", "KeyR", "KeyH", "KeyL", "Enter"].includes(e.code) ||
+        (["KeyG", "KeyF", "KeyR", "KeyH", "KeyL", "KeyV", "Enter"].includes(
+          e.code,
+        ) ||
           /^Digit[1-9]$/.test(e.code))
       )
         this.onToggle(e.code);

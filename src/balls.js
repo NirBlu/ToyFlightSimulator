@@ -198,7 +198,7 @@ export function interactBalls(s, balls, events = {}) {
 }
 
 /** Copy simulated positions to meshes and roll them visually. */
-export function syncBallMeshes(balls, dt) {
+export function syncBallMeshes(balls, dt, alpha = 1) {
   for (const ball of balls || []) {
     const m = ball.mesh;
     if (!m) continue;
@@ -208,6 +208,8 @@ export function syncBallMeshes(balls, dt) {
       spin.setFromAxisAngle(axis, (horizontal * dt) / ball.radius);
       m.quaternion.premultiply(spin);
     }
-    m.position.copy(ball.position);
+    if (ball.prev && ball.prev.distanceToSquared(ball.position) < 0.25)
+      m.position.lerpVectors(ball.prev, ball.position, alpha);
+    else m.position.copy(ball.position);
   }
 }

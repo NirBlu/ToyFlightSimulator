@@ -33,6 +33,8 @@ export class UI {
       "brand-sub",
       "hero-title",
       "hit-flash",
+      "antigrav",
+      "height-tag",
     ])
       this.el[id] = document.getElementById(id);
     this.toastTimer = 0;
@@ -155,11 +157,30 @@ export class UI {
     this.el.objective.textContent =
       this.level?.objective || "YOUR FIRST FLIGHT · DINING TABLE → COUCH ARM";
   }
-  update(state, controls, camera, target, dt) {
+  update(state, controls, camera, target, dt, near = null) {
     const s = state,
       speed = s.velocity.length();
     this.el.speed.innerHTML = `${speed.toFixed(2)} <small>m/s</small>`;
-    this.el.height.innerHTML = `${Math.round(s.position.y * 100)} <small>cm</small>`;
+    const ag = s.antiGrav;
+    const height = ag ? s.altitude : s.position.y;
+    this.el.height.innerHTML = Number.isFinite(height)
+      ? `${Math.round(height * 100)} <small>cm</small>`
+      : `— <small>cm</small>`;
+    if (this.el["height-tag"])
+      this.el["height-tag"].textContent = ag
+        ? `ABOVE THE ${ag.kind.toUpperCase()}`
+        : "ABOVE THE GROUND";
+    const agEl = this.el.antigrav;
+    if (agEl) {
+      const show = !s.crashed && controls.locked && (ag || near);
+      agEl.hidden = !show;
+      if (show) {
+        agEl.classList.toggle("on", !!ag);
+        agEl.textContent = ag
+          ? `ANTI-GRAV: ${ag.kind.toUpperCase()}${ag.name !== ag.kind ? ` · ${ag.name.toUpperCase()}` : ""} · V TO LET GO`
+          : `PRESS V · ANTI-GRAV ONTO THE ${near.name.toUpperCase()}`;
+      }
+    }
     this.el.throttle.textContent = `${Math.round(s.throttle * 100)}%`;
     this.el["throttle-fill"].style.width = `${s.throttle * 100}%`;
     const dmg = Math.round(s.damage || 0);
@@ -200,11 +221,13 @@ export class UI {
       : s.stall
         ? "STALL · ADD POWER"
         : s.grounded
-          ? s.hasFlown
-            ? "S TO BRAKE · W TO GO AGAIN"
-            : speed > 0.85
-              ? "PULL BACK TO LIFT OFF"
-              : "SPOOL UP TO 0.85"
+          ? s.antiGrav
+            ? "STUCK ON! W TO GO · V TO LET GO"
+            : s.hasFlown
+              ? "S TO BRAKE · W TO GO AGAIN"
+              : speed > 0.85
+                ? "PULL BACK TO LIFT OFF"
+                : "SPOOL UP TO 0.85"
           : s.flapsDown
             ? "LANDING CONFIGURATION"
             : "FREE AS A TOY BIRD";
@@ -214,7 +237,7 @@ export class UI {
     const [mx, mz] = this.mapPoint(s.position.x, s.position.z);
     this.el["map-plane"].setAttribute(
       "transform",
-      `translate(${mx.toFixed(1)} ${mz.toFixed(1)}) rotate(${(-s.yaw * 180) / Math.PI})`,
+      `translate(${mx.toFixed(1)} ${mz.toFixed(1)}) rotate(${(-(s.heading ?? s.yaw) * 180) / Math.PI})`,
     );
     const point = target.clone();
     point.y += 0.18;

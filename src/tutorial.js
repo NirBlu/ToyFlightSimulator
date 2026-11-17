@@ -1,7 +1,7 @@
 const lessons = [
   [
     "Meet your tiny plane",
-    "Pick a level (keys 1–4 or L anytime), then click LET’S FLY to capture the mouse. Mouse back = nose up. Mouse sideways = turn.",
+    "Pick a level (keys 1–5 or L anytime), then click LET’S FLY to capture the mouse. Mouse back = nose up. Mouse sideways = turn.",
     "Click to capture your mouse",
   ],
   [
@@ -33,6 +33,11 @@ const lessons = [
     "Make a gentle touchdown",
     "Stay level, float down gently, keep below 1.35 m/s and touch wheels first. Bumpy landings and bonks add DAMAGE (100% breaks the plane). Hold S to brake!",
     "Gentle nose up · S to brake",
+  ],
+  [
+    "Tricks: loops, rolls & anti-grav!",
+    "Full power, then keep pulling the mouse toward you for a whole LOOP. Hold A or D for a barrel ROLL. Fly close to a wall or the ceiling and press V: gravity flips and you can land on it, upside down! Press V again to let go.",
+    "V near a wall or ceiling · keep pulling = loop",
   ],
 ];
 export class Tutorial {
@@ -81,7 +86,7 @@ export class Tutorial {
     document.body.classList.toggle("tutorial-open", this.visible);
     const [title, copy, hint] = lessons[this.step];
     document.querySelector("#lesson-number").textContent =
-      `LESSON 0${this.step + 1} / 07`;
+      `LESSON 0${this.step + 1} / 0${lessons.length}`;
     document.querySelector("#lesson-title").textContent = title;
     document.querySelector("#lesson-copy").textContent = copy;
     document.querySelector("#lesson-hint").textContent = hint;
@@ -89,7 +94,7 @@ export class Tutorial {
       .map((_, i) => `<i class="${i <= this.step ? "done" : ""}"></i>`)
       .join("");
     document.querySelector("#next").textContent =
-      this.step === 6 ? "Got it ✓" : "Next →";
+      this.step === lessons.length - 1 ? "Got it ✓" : "Next →";
   }
   update(s, locked, dt, target) {
     if (!this.visible || !locked || s.crashed) return;
@@ -102,6 +107,7 @@ export class Tutorial {
       s.position.distanceTo(target) < 1.7 || this.elapsed > 12,
       s.flapsDown && s.gearDown,
       s.landings > 0,
+      !!s.antiGrav || this.elapsed > 20,
     ][this.step];
     if (done && this.elapsed > 0.7) this.next();
   }

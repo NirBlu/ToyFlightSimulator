@@ -6,14 +6,14 @@
     <meta name="theme-color" content="#132d3b" />
     <meta
       name="description"
-      content="A tiny airplane. Big places to explore: living room, front lawn, toy room and parking lot. Land on anything flat!"
+      content="A tiny airplane. Big places to explore: living room, front lawn, toy room, parking lot and the Mega Mart. Loops, rolls, anti-grav wall landings. Land on anything flat!"
     />
     <title>Toy Flight · Tiny plane adventures</title>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23132d3b'/%3E%3Ctext x='8' y='46' font-size='44'%3E✈%3C/text%3E%3C/svg%3E"
     />
-    <link rel="stylesheet" href="./src/style.css?v=7" />
+    <link rel="stylesheet" href="./src/style.css?v=8" />
     <script type="importmap">
       {
         "imports": {
@@ -81,6 +81,7 @@
         <div id="stick-pip"></div>
       </div>
       <div id="stall" hidden>↓ TOO SLOW · NOSE DOWN, THROTTLE UP</div>
+      <div id="antigrav" class="antigrav" hidden></div>
       <section id="menu" class="menu">
         <span class="eyebrow">READY, LITTLE PILOT?</span>
         <h2>Your room.<br />Your runway.</h2>
@@ -91,7 +92,7 @@
         <div id="levels" class="levels" aria-label="Choose a level"></div>
         <button id="play" class="primary">LET’S FLY <span>↗</span></button
         ><small
-          >Click to capture your mouse · Esc to pause · 1–4 or L: levels</small
+          >Click to capture your mouse · Esc to pause · 1–5 or L: levels</small
         >
       </section>
       <section id="crash-screen" class="menu crash-menu" hidden>
@@ -118,7 +119,7 @@
         </div>
         <div class="instrument altitude">
           <span>HEIGHT</span><strong id="height">86 <small>cm</small></strong>
-          <div class="tiny-label">ABOVE THE GROUND</div>
+          <div id="height-tag" class="tiny-label">ABOVE THE GROUND</div>
         </div>
         <div class="instrument damage">
           <span>DAMAGE <b id="damage">0%</b></span>
@@ -152,14 +153,14 @@
       </section>
       <footer>
         <span
-          ><kbd>A</kbd><kbd>D</kbd> ROLL <i>·</i> MOUSE: PITCH & YAW <i>·</i>
-          <kbd>G</kbd> GEAR <i>·</i> <kbd>F</kbd> FLAPS <i>·</i>
-          <kbd>L</kbd> LEVELS</span
+          ><kbd>A</kbd><kbd>D</kbd> ROLL <i>·</i> MOUSE: PITCH & YAW (LOOPS!)
+          <i>·</i> <kbd>G</kbd> GEAR <i>·</i> <kbd>F</kbd> FLAPS <i>·</i>
+          <kbd>V</kbd> ANTI-GRAV <i>·</i> <kbd>L</kbd> LEVELS</span
         ><span id="status">DESKTOP · KEYBOARD + MOUSE / THRUSTMASTER</span>
       </footer>
       <div id="hit-flash" aria-hidden="true"></div>
       <div id="fatal" hidden role="alert"></div>
     </div>
-    <script type="module" src="./src/main.js?v=7"></script>
+    <script type="module" src="./src/main.js?v=8"></script>
   </body>
 </html>

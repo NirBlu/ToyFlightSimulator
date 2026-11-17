@@ -4,15 +4,29 @@ import {
   animatePlane,
   loadPlaneModel,
   PLANE_MODEL_URL,
-} from "./plane.js?v=7";
-import { Controls } from "./controls.js?v=7";
-import { createFlightState, stepFlight } from "./physics.js?v=7";
-import { stepBalls, syncBallMeshes } from "./balls.js?v=7";
-import { CrashEffects } from "./crash.js?v=7";
-import { DamageSmoke } from "./effects.js?v=7";
-import { Tutorial } from "./tutorial.js?v=7";
-import { UI } from "./ui.js?v=7";
-import { LEVELS, getLevel } from "./levels/index.js?v=7";
+} from "./plane.js?v=8";
+import { Controls } from "./controls.js?v=8";
+import {
+  createFlightState,
+  stepFlight,
+  toggleAntiGrav,
+  findNearestSurface,
+  ANTI_GRAV_RANGE,
+} from "./physics.js?v=8";
+import {
+  STEP,
+  advanceFixed,
+  Pose,
+  interpolatePose,
+  snapToTexel,
+} from "./loop.js?v=8";
+import { ChaseCamera } from "./camera.js?v=8";
+import { stepBalls, syncBallMeshes } from "./balls.js?v=8";
+import { CrashEffects } from "./crash.js?v=8";
+import { DamageSmoke } from "./effects.js?v=8";
+import { Tutorial } from "./tutorial.js?v=8";
+import { UI } from "./ui.js?v=8";
+import { LEVELS, getLevel } from "./levels/index.js?v=8";
 
 const canvas = document.querySelector("#game");
 try {
@@ -93,6 +107,15 @@ function start() {
   );
   const ui = new UI(),
     tutorial = new Tutorial();
+  const chase = new ChaseCamera(camera);
+  // Render interpolation: the plane is drawn between the last two physics steps.
+  const prevPose = new Pose(),
+    currPose = new Pose(),
+    renderPose = new Pose();
+  let alpha = 1,
+    frozen = false, // debug only: hold the simulation still for screenshots
+    nearSurface = null,
+    nearCheck = 0;
   let level = null,
     room = null,
     scene = null,
@@ -204,6 +227,23 @@ function start() {
           2,
         );
       }
+      if (code === "KeyV") {
+        const result = toggleAntiGrav(state, room);
+        if (result.off)
+          ui.toast("Anti-grav off. Normal gravity is coming back!", 3);
+        else if (result.ok)
+          ui.toast(
+            `ANTI-GRAV! Hold on, sticking to the ${result.hit.name}. Land gently!`,
+            4,
+          );
+        else
+          ui.toast(
+            "No surface close enough. Fly right up to a wall or the ceiling, then press V.",
+            3.5,
+          );
+        nearCheck = 0;
+        return;
+      }
       if (code === "KeyF") {
         state.flapsDown = !state.flapsDown;
         ui.toast(
@@ -224,7 +264,7 @@ function start() {
     }
     if (document.pointerLockElement) document.exitPointerLock();
     else ui.setLocked(false);
-    ui.toast("Pick a level, then LET’S FLY. Keys 1–4 work too!", 4);
+    ui.toast("Pick a level, then LET’S FLY. Keys 1–5 work too!", 4);
   }
   function pickLevel(id) {
     if (level && level.id === id) {
@@ -263,6 +303,11 @@ function start() {
     controls.clear();
     plane.root.position.copy(state.position);
     plane.root.quaternion.copy(state.quaternion);
+    prevPose.copyFrom(state);
+    currPose.copyFrom(state);
+    renderPose.copyFrom(state);
+    alpha = 1;
+    nearSurface = null;
     plane.gearBlend = 1;
     plane.flapBlend = 0;
     ui.reset();
@@ -324,6 +369,10 @@ function start() {
         3,
       );
     },
+    gravity(info) {
+      if (info.auto)
+        ui.toast(`Too far from the ${info.name}. Normal gravity is back!`, 3.5);
+    },
     crash(reason) {
       crashReason = reason;
       plane.root.position.copy(state.position);
@@ -336,31 +385,20 @@ function start() {
   };
   const shakeOffset = new THREE.Vector3();
   function updateCamera(dt, snap = false) {
-    const c = level.env.camera;
-    const heading = new THREE.Vector3(
-      Math.sin(state.yaw),
-      0,
-      Math.cos(state.yaw),
-    );
-    const desired = state.position.clone().addScaledVector(heading, 0.83);
-    desired.y += 0.34;
-    desired.x = THREE.MathUtils.clamp(desired.x, c.minX, c.maxX);
-    desired.z = THREE.MathUtils.clamp(desired.z, c.minZ, c.maxZ);
-    desired.y = THREE.MathUtils.clamp(desired.y, c.minY, c.maxY);
     camera.position.sub(shakeOffset);
-    camera.position.lerp(desired, snap ? 1 : 1 - Math.exp(-7 * dt));
-    const look = state.position.clone().addScaledVector(heading, -0.24);
-    look.y += 0.06;
-    camera.lookAt(look);
+    chase.update(dt, snap ? state : renderPose, state, level.env.camera, snap);
     shake = snap ? 0 : Math.max(0, shake - dt * 2.5);
     const a = shake * shake * 0.035;
-    shakeOffset.set(
-      (Math.random() - 0.5) * a,
-      (Math.random() - 0.5) * a,
-      (Math.random() - 0.5) * a,
-    );
+    if (a > 0)
+      shakeOffset.set(
+        (Math.random() - 0.5) * a,
+        (Math.random() - 0.5) * a,
+        (Math.random() - 0.5) * a,
+      );
+    else shakeOffset.set(0, 0, 0);
     camera.position.add(shakeOffset);
   }
+  const sunTarget = new THREE.Vector3();
   loadLevel(savedLevelId());
   let previous = performance.now(),
     time = 0;
@@ -370,21 +408,40 @@ function start() {
     previous = now;
     time += dt;
     const input = controls.update(dt, now);
-    if (controls.locked) {
-      accumulator += dt;
-      while (accumulator >= 1 / 120) {
-        if (!state.crashed) stepFlight(state, input, 1 / 120, room, events);
-        stepBalls(room, 1 / 120);
-        accumulator -= 1 / 120;
-      }
+    if (controls.locked && !frozen) {
+      const result = advanceFixed(accumulator, dt, STEP, (h) => {
+        prevPose.copyFrom(currPose);
+        for (const b of room.balls || [])
+          (b.prev || (b.prev = new THREE.Vector3())).copy(b.position);
+        if (!state.crashed) stepFlight(state, input, h, room, events);
+        currPose.copyFrom(state);
+        stepBalls(room, h);
+      });
+      accumulator = result.accumulator;
+      alpha = result.alpha;
       if (!state.crashed) {
-        plane.root.position.copy(state.position);
-        plane.root.quaternion.copy(state.quaternion);
+        // Draw the plane where it really is "now": between the last two steps.
+        interpolatePose(renderPose, prevPose, currPose, alpha);
+        plane.root.position.copy(renderPose.position);
+        plane.root.quaternion.copy(renderPose.quaternion);
         animatePlane(plane, state, dt);
         tutorial.update(state, controls.locked, dt, target);
       }
+      // Anti-grav hint: is there a wall / ceiling / side close enough for V?
+      nearCheck -= dt;
+      if (nearCheck <= 0 && !state.crashed) {
+        nearCheck = 0.15;
+        nearSurface = state.antiGrav
+          ? null
+          : findNearestSurface(
+              room,
+              state.position,
+              ANTI_GRAV_RANGE,
+              state.gravUp,
+            );
+      }
     }
-    syncBallMeshes(room.balls, controls.locked ? dt : 0);
+    syncBallMeshes(room.balls, controls.locked ? dt : 0, alpha);
     crashFX.update(dt);
     smoke.update(dt, state, plane.root);
     if (crashDelay && crashFX.time > 1.15) {
@@ -394,11 +451,14 @@ function start() {
     }
     if (!state.crashed) updateCamera(dt);
     if (level.env.sun.follow) {
-      sun.target.position.set(state.position.x, 0, state.position.z);
+      // Follow the plane, but in whole shadow-map texels so shadows do not shimmer.
+      const texel = (2 * level.env.sun.size) / sun.shadow.mapSize.x;
+      sunTarget.set(renderPose.position.x, 0, renderPose.position.z);
+      snapToTexel(sun.target.position, sunTarget, sun.userData.offset, texel);
       sun.position.copy(sun.target.position).add(sun.userData.offset);
     }
     room.update(time, dt);
-    ui.update(state, controls, camera, target, dt);
+    ui.update(state, controls, camera, target, dt, nearSurface);
     renderer.render(scene, camera);
   }
   requestAnimationFrame(frame);
@@ -438,7 +498,38 @@ function start() {
         return crashFX;
       },
       camera,
+      chase,
       restart,
       renderer,
+      renderPose,
+      toggleAntiGrav: () => toggleAntiGrav(state, room),
+      /** Put the plane somewhere, flying level at `speed`, and snap the camera. */
+      teleport(x, y, z, yaw = 0, speed = 0) {
+        const s = state;
+        s.grounded = null;
+        s.hasFlown = true;
+        s.position.set(x, y, z);
+        s.quaternion.setFromEuler(new THREE.Euler(0, yaw, 0, "YXZ"));
+        s.pitch = 0;
+        s.roll = 0;
+        s.yaw = yaw;
+        s._e = { p: 0, y: yaw, r: 0 };
+        s.velocity.set(-Math.sin(yaw) * speed, 0, -Math.cos(yaw) * speed);
+        prevPose.copyFrom(s);
+        currPose.copyFrom(s);
+        renderPose.copyFrom(s);
+        updateCamera(1, true);
+      },
+      findNearestSurface: () =>
+        findNearestSurface(room, state.position, ANTI_GRAV_RANGE, state.gravUp),
+      get alpha() {
+        return alpha;
+      },
+      get frozen() {
+        return frozen;
+      },
+      set frozen(v) {
+        frozen = !!v;
+      },
     };
 }
