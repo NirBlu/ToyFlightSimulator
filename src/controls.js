@@ -34,6 +34,8 @@ export class Controls {
           "KeyH",
           "KeyL",
           "KeyV",
+          "ArrowUp",
+          "ArrowDown",
           "Enter",
           "Space",
         ].includes(e.code)
@@ -110,7 +112,16 @@ export class Controls {
     const gain = r > deadzone ? (r - deadzone) / (1 - deadzone) / r : 0;
     return {
       yaw: this.stick.x * gain,
-      pitch: this.stick.y * gain,
+      // Arrow keys are a steady "hold the stick" for pitch: ↓ pulls up, ↑ pushes down.
+      pitch: Math.max(
+        -1,
+        Math.min(
+          1,
+          this.stick.y * gain +
+            (this.keys.has("ArrowDown") ? 1 : 0) -
+            (this.keys.has("ArrowUp") ? 1 : 0),
+        ),
+      ),
       roll: (this.keys.has("KeyA") ? 1 : 0) - (this.keys.has("KeyD") ? 1 : 0),
       throttleUp: this.keys.has("KeyW"),
       brake: this.keys.has("KeyS"),

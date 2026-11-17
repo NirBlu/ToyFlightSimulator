@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three.module.js";
-import { interactBalls } from "./balls.js?v=8";
+import { interactBalls } from "./balls.js?v=9";
 
 export const GRAVITY = 2.3; // deliberately toy-like: easier than full earth gravity at this scale
 export const GEAR_CLEARANCE = 0.068;
@@ -735,10 +735,20 @@ function core(s, input, dt, room, events) {
     if (assist) {
       assist.t += dt;
       const u2 = _c.copy(UP).applyQuaternion(q);
-      if (assist.t < 2 && u2.y < 0.9995) {
-        _dq2.setFromUnitVectors(u2, UP);
-        _dq.slerpQuaternions(_id, _dq2, 1 - Math.exp(-6 * dt));
-        q.premultiply(_dq);
+      // The swing is a one-time "turn your belly to the new floor". It stops for
+      // good once it gets there (or after 2 s), and it always gives way to the
+      // pilot: with the stick held it barely pulls, so pitch and roll keep
+      // working (before, it pinned the nose at ~17° for 2 s after every V press
+      // or automatic release: "pull up gets stuck").
+      if (!assist.aligned && assist.t < 2) {
+        if (u2.y > 0.995) assist.aligned = true;
+        else {
+          const hands = clamp(Math.max(Math.abs(ip), Math.abs(ir)) * 1.6, 0, 1);
+          const k = (1 - Math.exp(-6 * dt)) * (1 - 0.9 * hands);
+          _dq2.setFromUnitVectors(u2, UP);
+          _dq.slerpQuaternions(_id, _dq2, k);
+          q.premultiply(_dq);
+        }
       }
     }
     q.normalize();

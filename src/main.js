@@ -4,29 +4,29 @@ import {
   animatePlane,
   loadPlaneModel,
   PLANE_MODEL_URL,
-} from "./plane.js?v=8";
-import { Controls } from "./controls.js?v=8";
+} from "./plane.js?v=9";
+import { Controls } from "./controls.js?v=9";
 import {
   createFlightState,
   stepFlight,
   toggleAntiGrav,
   findNearestSurface,
   ANTI_GRAV_RANGE,
-} from "./physics.js?v=8";
+} from "./physics.js?v=9";
 import {
   STEP,
   advanceFixed,
   Pose,
   interpolatePose,
   snapToTexel,
-} from "./loop.js?v=8";
-import { ChaseCamera } from "./camera.js?v=8";
-import { stepBalls, syncBallMeshes } from "./balls.js?v=8";
-import { CrashEffects } from "./crash.js?v=8";
-import { DamageSmoke } from "./effects.js?v=8";
-import { Tutorial } from "./tutorial.js?v=8";
-import { UI } from "./ui.js?v=8";
-import { LEVELS, getLevel } from "./levels/index.js?v=8";
+} from "./loop.js?v=9";
+import { ChaseCamera } from "./camera.js?v=9";
+import { stepBalls, syncBallMeshes } from "./balls.js?v=9";
+import { CrashEffects } from "./crash.js?v=9";
+import { DamageSmoke } from "./effects.js?v=9";
+import { Tutorial } from "./tutorial.js?v=9";
+import { UI } from "./ui.js?v=9";
+import { LEVELS, getLevel } from "./levels/index.js?v=9";
 
 const canvas = document.querySelector("#game");
 try {

@@ -88,6 +88,7 @@ Physics runs at a fixed 120 Hz. The plane (and the bouncy balls) are drawn **int
 | **Mouse toward you** (positive Y)     | Pull back / nose up                                                                   |
 | **Mouse away from you** (negative Y)  | Push forward / nose down                                                              |
 | **Mouse left / right**                | Yaw left / right                                                                      |
+| **↓ / ↑ arrow** (hold)                | Steady pull up / push down, same as holding the stick back / forward                  |
 | **G**                                 | Toggle landing gear (animated; retraction is protected while grounded)                |
 | **F**                                 | Toggle flaps: extra lift and drag, lower stall speed                                  |
 | **V**                                 | Anti-grav: stick to the nearest wall / ceiling / side (within 1.5 m); V again lets go |
