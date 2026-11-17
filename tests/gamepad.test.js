@@ -40,21 +40,37 @@ test("deadzone: tiny deflections are ignored, full stays full", () => {
   assert.ok(Math.abs(applyDeadzone(0.54, 0.08) - 0.5) < 1e-9);
 });
 
-test("Nir's HOTAS layout: 0 X, 1 Y, 2 twist, 5 throttle (forward = -1)", () => {
-  const m = mapGamepads([pad(HOTAS, [1, 1, 0.5, 0, 0, -1, 0, 0])]);
-  assert.equal(m.pitch, 1); // back = positive Y = nose up, like mouse toward you
-  assert.equal(m.roll, -1); // right = negative roll (A = +1 = left)
-  assert.ok(m.yaw > 0.3); // twist right = turn right, like mouse right
-  assert.equal(m.throttle, 1);
-  assert.equal(mapGamepads([pad(HOTAS, [0, 0, 0, 0, 0, 1])]).throttle, 0);
-  // Only 5 axes: the last one is the lever.
-  assert.equal(defaultBindings([pad(HOTAS, [0, 0, 0, 0, 0])]).throttle.axis, 4);
-  assert.equal(defaultBindings([pad(HOTAS, [0, 0, 0])]).throttle, null);
-  const rest = mapGamepads([pad(HOTAS, [0.03, -0.05, 0.02, 0, 0, 0])]);
+// Nir's real Thrustmaster: 0 side to side, 1 up/down, 3 throttle lever, 5 roll.
+const nir = ({ x = 0, y = 0, lever = 0, roll = 0 } = {}) => [x, y, 0, lever, 0, roll, 0, 0];
+
+test("Nir's layout: 0 = turn (like mouse X), 1 = pitch, 3 = throttle, 5 = roll", () => {
+  const b = defaultBindings([pad(HOTAS, nir())]);
+  assert.equal(b.yaw.axis, 0);
+  assert.equal(b.pitch.axis, 1);
+  assert.equal(b.throttle.axis, 3);
+  assert.equal(b.roll.axis, 5);
+  let m = mapGamepads([pad(HOTAS, nir({ x: 1 }))]);
+  assert.equal(m.yaw, 1); // side to side right = turn right, like mouse right
+  assert.equal(m.roll, 0);
+  assert.equal(m.pitch, 0);
+  m = mapGamepads([pad(HOTAS, nir({ y: 1 }))]);
+  assert.equal(m.pitch, 1); // back = nose up, like mouse toward you
+  assert.equal(m.yaw, 0);
+  m = mapGamepads([pad(HOTAS, nir({ roll: 1 }))]);
+  assert.equal(m.roll, -1); // roll right (A = +1 = left)
+  assert.equal(m.yaw, 0);
+  assert.equal(mapGamepads([pad(HOTAS, nir({ roll: -1 }))]).roll, 1);
+  assert.equal(mapGamepads([pad(HOTAS, nir({ lever: -1 }))]).throttle, 1);
+  assert.equal(mapGamepads([pad(HOTAS, nir({ lever: 1 }))]).throttle, 0);
+  const rest = mapGamepads([pad(HOTAS, nir({ x: 0.03, y: -0.05, roll: 0.02 }))]);
   assert.equal(rest.pitch, 0);
   assert.equal(rest.roll, 0);
   assert.equal(rest.yaw, 0);
   assert.equal(rest.throttle, 0.5);
+  // Small devices fall back safely: roll on axis 2, no lever under 4 axes.
+  assert.equal(defaultBindings([pad(HOTAS, [0, 0, 0, 0])]).roll.axis, 2);
+  assert.equal(defaultBindings([pad(HOTAS, [0, 0, 0])]).throttle, null);
+  assert.equal(defaultBindings([pad(HOTAS, [0, 0])]).roll, null);
 });
 
 test("separate stick + throttle devices are told apart by name, any order", () => {
@@ -87,16 +103,27 @@ test("standard-mapping gamepad: triggers are throttle up / brake", () => {
   assert.ok(m.yaw > 0.4);
 });
 
-test("config: invert pitch and stick X = yaw (like the mouse)", () => {
-  const p = [pad(HOTAS, [0.6, 1, -0.6, 0, 0, 0])];
-  const m = mapGamepads(p, { ...DEFAULT_GAMEPAD_CONFIG, invertPitch: true, stickX: "yaw" });
+test("config: invert pitch, and M swaps roll / turn axes", () => {
+  const p = [pad(HOTAS, nir({ x: 0.6, y: 1, roll: -0.6 }))];
+  const m = mapGamepads(p, { ...DEFAULT_GAMEPAD_CONFIG, invertPitch: true, swapRollTurn: true });
   assert.equal(m.pitch, -1);
-  assert.ok(m.yaw > 0.4); // stick right -> turn right
-  assert.ok(m.roll > 0.4); // twist left -> bank left
+  assert.ok(m.roll < -0.4); // side to side right -> now rolls right
+  assert.ok(m.yaw < -0.4); // roll axis left -> now turns left
+});
+
+test("old v1 saved mappings are ignored (new defaults win)", () => {
+  const store = memory();
+  store.setItem("toyflight-gamepad-v1", JSON.stringify({ roll: { id: HOTAS, axis: 0, invert: false }, throttle: { id: HOTAS, axis: 5, invert: true } }));
+  const g = new GamepadInput({ getPads: () => [pad(HOTAS, nir({ x: 1 }))], storage: store });
+  assert.equal(g.config.roll, null);
+  const m = g.poll();
+  assert.equal(m.yaw, 1);
+  assert.equal(m.roll, 0);
+  assert.equal(STORAGE_KEY, "toyflight-gamepad-v2");
 });
 
 test("lever only takes over once moved; W/S hand control back; idle brakes", () => {
-  const lever = (v) => [0, 0, 0, 0, 0, v];
+  const lever = (v) => nir({ lever: v });
   let axes = lever(0.2);
   const g = new GamepadInput({ getPads: () => [pad(HOTAS, axes)], storage: memory() });
   assert.equal(g.poll().throttle, null); // resting lever ignored at first
@@ -153,7 +180,7 @@ test("J-panel learning: move an axis to bind it (direction too), saved", () => {
   assert.equal(again.config.throttle.axis, 5);
   assert.ok(JSON.parse(store.getItem(STORAGE_KEY)).pitch);
   // Unplugged learned device: falls back to defaults without crashing.
-  const other = new GamepadInput({ getPads: () => [pad(HOTAS, [0, 1, 0, 0, 0, 0])], storage: store });
+  const other = new GamepadInput({ getPads: () => [pad(HOTAS, nir({ y: 1 }))], storage: store });
   assert.equal(other.poll().pitch, 1);
 });
 
@@ -180,7 +207,7 @@ test("button learning binds gear, flaps, anti-grav in order", () => {
 });
 
 test("Controls merge: joystick works with no mouse, mouse/keys still work, buttons toggle", () => {
-  let axes = [0, 0, 0, 0, 0, 0],
+  let axes = nir(),
     pressed = [];
   const c = Object.create(Controls.prototype);
   c.stick = { x: 0, y: 0 };
@@ -195,7 +222,7 @@ test("Controls merge: joystick works with no mouse, mouse/keys still work, butto
   let i = c.update(1 / 60, 1000);
   assert.equal(i.pitch, 0);
   assert.equal(i.throttleSet, null);
-  axes = [1, 1, 0, 0, 0, -1];
+  axes = nir({ roll: 1, y: 1, lever: -1 });
   pressed = [1];
   i = c.update(1 / 60, 1016);
   assert.equal(i.pitch, 1);

@@ -1,5 +1,5 @@
 import * as THREE from "../../vendor/three.module.js";
-import { createBuilder, canvasTexture, pulsePads } from "./builder.js?v=10";
+import { createBuilder, canvasTexture, pulsePads } from "./builder.js?v=11";
 
 /** A bright 8 × 10 m playroom with a big bed runway, a toy race track and bouncy balls. */
 export default {

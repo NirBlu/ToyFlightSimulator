@@ -1,9 +1,9 @@
-import { padLabel, resolveBindings, resolveButtons } from "./gamepad.js?v=10";
+import { padLabel, resolveBindings, resolveButtons } from "./gamepad.js?v=11";
 
 const PROMPTS = {
   pitch: "PITCH: pull the stick all the way BACK (toward you)…",
-  roll: "ROLL: push the stick all the way RIGHT…",
-  yaw: "TWIST / RUDDER: twist the stick (or rock the rudder) RIGHT…",
+  roll: "ROLL: move the control you want for rolling all the way RIGHT…",
+  yaw: "TURN: push the stick all the way RIGHT (side to side, like the mouse)…",
   throttle:
     "THROTTLE: move the lever back and forth, then leave it fully FORWARD and press T…",
   buttons: ["press the button for GEAR (G)…", "press the button for FLAPS (F)…", "press the button for ANTI-GRAV (V)…"],
@@ -33,8 +33,8 @@ export class GamepadPanel {
       <div class="pad-roles" id="pad-roles"></div>
       <div class="pad-list" id="pad-list"></div>
       <div class="pad-help">
-        Re-learn by moving it: <kbd>P</kbd> pitch · <kbd>X</kbd> roll · <kbd>Y</kbd> twist/rudder · <kbd>T</kbd> throttle · <kbd>B</kbd> buttons<br/>
-        <kbd>I</kbd> invert pitch · <kbd>M</kbd> stick left/right = roll or turn · <kbd>C</kbd> reset to defaults · <kbd>Esc</kbd> cancel
+        Re-learn by moving it: <kbd>P</kbd> pitch · <kbd>X</kbd> roll · <kbd>Y</kbd> turn · <kbd>T</kbd> throttle · <kbd>B</kbd> buttons<br/>
+        <kbd>I</kbd> invert pitch · <kbd>M</kbd> swap roll / turn · <kbd>C</kbd> reset to defaults · <kbd>Esc</kbd> cancel
       </div>`;
     document.getElementById("app")?.appendChild(el);
     this.learnEl = el.querySelector("#pad-learn");
@@ -65,8 +65,8 @@ export class GamepadPanel {
         this.gp.set("invertPitch", !this.gp.config.invertPitch);
         this.toast(`Pitch ${this.gp.config.invertPitch ? "INVERTED: stick back = nose down" : "normal: stick back = nose up"}`, 3);
       } else if (e.code === "KeyM") {
-        this.gp.set("stickX", this.gp.config.stickX === "roll" ? "yaw" : "roll");
-        this.toast(`Stick left/right now ${this.gp.config.stickX === "roll" ? "ROLLS (banks) the plane" : "TURNS (yaws) like the mouse"}`, 3);
+        this.gp.set("swapRollTurn", !this.gp.config.swapRollTurn);
+        this.toast(`Roll and turn axes ${this.gp.config.swapRollTurn ? "SWAPPED: side to side now rolls" : "normal: side to side turns like the mouse"}`, 3);
       } else if (e.code === "KeyC") {
         this.gp.reset();
         this.toast("Joystick mapping reset to defaults.", 3);
@@ -126,8 +126,8 @@ export class GamepadPanel {
     const lever = gp.last?.lever;
     this.rolesEl.innerHTML =
       role(c.invertPitch ? "PITCH (inverted)" : "PITCH", b.pitch) +
-      role(c.stickX === "roll" ? "ROLL (stick X)" : "TURN (stick X)", b.roll) +
-      role(c.stickX === "roll" ? "TURN (twist)" : "ROLL (twist)", b.yaw) +
+      role(c.swapRollTurn ? "TURN (swapped)" : "ROLL", b.roll) +
+      role(c.swapRollTurn ? "ROLL (swapped)" : "TURN (like mouse)", b.yaw) +
       role(
         `THROTTLE${lever != null ? ` ${Math.round(lever * 100)}%${gp.leverEngaged ? "" : " (move to take over)"}` : ""}`,
         b.throttle,

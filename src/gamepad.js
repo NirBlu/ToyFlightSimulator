@@ -6,8 +6,8 @@
 /** Every tweakable mapping lives here. Saved overrides go on top of it. */
 export const DEFAULT_GAMEPAD_CONFIG = {
   deadzone: 0.08,
-  /** What stick left/right does: "roll" (bank, like A/D) or "yaw" (like the mouse). */
-  stickX: "roll",
+  /** Swap the roll and turn axes (J panel key M). */
+  swapRollTurn: false,
   invertPitch: false,
   /** Lever below this (0..1) counts as idle and also brakes on the ground, like S. */
   idleBrake: 0.03,
@@ -15,7 +15,7 @@ export const DEFAULT_GAMEPAD_CONFIG = {
   throttleTakeover: 0.06,
   // Learned axis bindings: { id, axis, invert } or null for the built-in guess.
   // `invert` false means the raw axis is already positive in the asked-for
-  // direction: stick BACK (pitch), stick RIGHT (roll), twist RIGHT (yaw),
+  // direction: stick BACK (pitch), roll RIGHT (roll), stick RIGHT (yaw / turn),
   // lever FORWARD (throttle).
   pitch: null,
   roll: null,
@@ -26,7 +26,7 @@ export const DEFAULT_GAMEPAD_CONFIG = {
 };
 export const DEFAULT_BUTTONS = { antigrav: 0, gear: 1, flaps: 2 };
 export const BUTTON_CODES = { gear: "KeyG", flaps: "KeyF", antigrav: "KeyV" };
-export const STORAGE_KEY = "toyflight-gamepad-v1";
+export const STORAGE_KEY = "toyflight-gamepad-v2" // v1 held the old default layout; ignored;
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 export const isThrottleId = (id = "") =>
@@ -67,19 +67,22 @@ export function defaultBindings(pads) {
   const { stick, throttle } = pickDevices(pads);
   const b = { pitch: null, roll: null, yaw: null, throttle: null };
   if (stick) {
-    b.roll = { pad: stick, axis: 0, invert: false };
-    b.pitch = { pad: stick, axis: 1, invert: false };
     const n = stick.axes.length;
+    const ax = (axis, invert = false) =>
+      axis != null && axis < n ? { pad: stick, axis, invert } : null;
+    b.pitch = ax(1);
     if (stick.mapping === "standard") {
-      // Xbox / PlayStation style: right stick X turns, triggers are throttle.
-      if (n > 2) b.yaw = { pad: stick, axis: 2, invert: false };
+      // Xbox / PlayStation style: left stick flies, right stick X turns,
+      // triggers are throttle (see mapGamepads).
+      b.roll = ax(0);
+      b.yaw = ax(2);
     } else {
-      // HOTAS / plain stick (Nir's Thrustmaster on Linux): 0 = X, 1 = Y,
-      // 2 = twist / rudder, 5 = throttle lever (axes 3-4 are often unused or
-      // extra; hats may add more after). Fewer axes: the last one is the lever.
-      if (n > 2) b.yaw = { pad: stick, axis: 2, invert: false };
-      if (!throttle && n > 3)
-        b.throttle = { pad: stick, axis: n > 5 ? 5 : n - 1, invert: true };
+      // Nir's Thrustmaster (checked on the real stick, Linux):
+      // 0 = side to side -> turn (like the mouse), 1 = up/down -> pitch,
+      // 3 = throttle lever, 5 = roll. Smaller devices: roll on axis 2.
+      b.yaw = ax(0);
+      b.roll = ax(n > 5 ? 5 : 2);
+      if (!throttle) b.throttle = ax(3, true);
     }
   }
   if (throttle)
@@ -136,12 +139,12 @@ export function mapGamepads(pads, config = DEFAULT_GAMEPAD_CONFIG) {
   const cfg = { ...DEFAULT_GAMEPAD_CONFIG, ...config };
   const b = resolveBindings(pads, cfg);
   const dz = cfg.deadzone;
-  const x = applyDeadzone(axisValue(b.roll), dz);
-  const twist = applyDeadzone(axisValue(b.yaw), dz * 1.5);
+  const rollAxis = applyDeadzone(axisValue(b.roll), dz);
+  const turnAxis = applyDeadzone(axisValue(b.yaw), dz);
   let pitch = applyDeadzone(axisValue(b.pitch), dz);
   if (cfg.invertPitch) pitch = -pitch;
-  const right = cfg.stickX === "yaw" ? twist : x;
-  const turn = cfg.stickX === "yaw" ? x : twist;
+  const right = cfg.swapRollTurn ? turnAxis : rollAxis;
+  const turn = cfg.swapRollTurn ? rollAxis : turnAxis;
   const out = {
     pitch,
     roll: 0 - right,

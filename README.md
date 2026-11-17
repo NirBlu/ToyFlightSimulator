@@ -110,16 +110,16 @@ Real joysticks work through the browser **Gamepad API** (Chrome or Firefox, Linu
 
 | Joystick / throttle               | Action                                                                  |
 | --------------------------------- | ----------------------------------------------------------------------- |
-| **Stick back / forward**          | Nose up / nose down (same as the mouse toward / away from you)          |
-| **Stick left / right**            | Bank (roll) left / right, like A / D. Press **M** in the J panel to make it turn (yaw) like the mouse instead |
-| **Twist / rudder rocker**         | Turn (yaw) left / right                                                 |
-| **Throttle lever**                | Sets the power directly: back = idle, forward = full (like W / S)       |
+| **Stick back / forward** (axis 1) | Nose up / nose down (same as the mouse toward / away from you)          |
+| **Stick side to side** (axis 0)   | Turn (yaw) left / right, like the mouse                                 |
+| **Roll axis** (axis 5)            | Roll (bank) left / right, like A / D. **M** in the J panel swaps roll / turn |
+| **Throttle lever** (axis 3)       | Sets the power directly: back = idle, forward = full (like W / S)       |
 | **Lever all the way back**        | Idle + wheel brakes on the ground (like holding S)                      |
 | **Trigger (button 0)**            | V anti-grav                                                             |
 | **Button 1 / button 2**           | G gear / F flaps                                                        |
 | Xbox / PlayStation pad            | Left stick flies, right stick turns, RT = more power, LT = less / brake |
 
-- **Default axes** (one device, e.g. T.Flight HOTAS on Linux): axis 0 = stick X (roll), 1 = stick Y (pitch), 2 = twist (turn), 5 = throttle lever (a 4–5 axis device uses its last axis). A separate throttle device (name contains "Throttle" / "TWCS") is used for power automatically. The J panel shows the numbers live.
+- **Default axes** (checked on Nir's Thrustmaster on Linux): axis 0 = side to side (turn, like the mouse), 1 = up / down (pitch), 3 = throttle lever, 5 = roll. Devices with fewer axes use axis 2 for roll. A separate throttle device (name contains "Throttle" / "TWCS") is used for power automatically. The J panel shows the numbers live.
 - **Linux browsers hide a joystick until you press a button on it.** Plug it in, click into the game tab, press any button: the footer then shows `🕹 JOYSTICK: …`.
 - The mouse and keys keep working. The stick adds to them (8% deadzone, so a resting stick does nothing), and the throttle lever only takes over once you **move it**. Pressing W or S hands power back to the keys until you move the lever again.
 - You still click **LET’S FLY** once to start (browsers only allow mouse capture after a real click).
@@ -129,14 +129,14 @@ Real joysticks work through the browser **Gamepad API** (Chrome or Firefox, Linu
 | Key in J panel | Learn                                                                                     |
 | -------------- | ----------------------------------------------------------------------------------------- |
 | **P**          | Pitch: pull the stick all the way back                                                    |
-| **X**          | Roll: push the stick all the way right                                                    |
-| **Y**          | Twist / rudder: twist right                                                               |
+| **X**          | Roll: move the roll control all the way right                                             |
+| **Y**          | Turn: push the stick all the way right (side to side)                                     |
 | **T**          | Throttle: move the lever back and forth, leave it fully forward, press **T** again        |
 | **B**          | Buttons: press the button you want for gear, then flaps, then anti-grav                   |
-| **I / M / C**  | Invert pitch / stick left-right = roll or turn / reset everything to defaults             |
+| **I / M / C**  | Invert pitch / swap roll and turn / reset everything to defaults             |
 | **Esc**        | Cancel learning                                                                           |
 
-The direction you move while learning also sets the axis direction, so nothing ends up backwards. Mappings are saved in the browser (`localStorage`, key `toyflight-gamepad-v1`) per device name. All defaults live in one object, `DEFAULT_GAMEPAD_CONFIG` / `defaultBindings()` in `src/gamepad.js`.
+The direction you move while learning also sets the axis direction, so nothing ends up backwards. Mappings are saved in the browser (`localStorage`, key `toyflight-gamepad-v2`; older v1 saves are ignored) per device name. All defaults live in one object, `DEFAULT_GAMEPAD_CONFIG` / `defaultBindings()` in `src/gamepad.js`.
 
 ### Mouse recentering
 
@@ -222,7 +222,7 @@ vite.config.js         Relative base, vendor chunk, copies models/ into dist/
 
 ### Notes / limits
 
-- Desktop keyboard + mouse and USB joystick / throttle / gamepad; no touch controls, audio or multiplayer yet. Joystick defaults are guesses per device family and have not been validated on physical Thrustmaster hardware: use the J panel to fix any axis.
+- Desktop keyboard + mouse and USB joystick / throttle / gamepad; no touch controls, audio or multiplayer yet. Joystick defaults follow the axis numbers Nir read off his Thrustmaster; other devices may differ, so use the J panel to fix any axis.
 - The chase camera is level-bounded, not a full furniture-occlusion camera.
 - Collision detection uses small fixed steps and multiple body / wing probes, not mesh-level rigid-body physics. Decorative leaves / curtain folds are visual-only.
 - Dependencies are pinned through `package-lock.json`; `node_modules/` and `dist/` stay out of git.
