@@ -1,17 +1,17 @@
 const lessons = [
   [
     "Meet your tiny plane",
-    "Pick a level (keys 1–5 or L anytime), then click LET’S FLY to capture the mouse. Mouse back = nose up. Mouse sideways = turn.",
+    "Pick a level (keys 1–5 or L anytime), then click LET’S FLY to capture the mouse. Mouse back = nose up. Mouse sideways = turn. Got a joystick? Pull it back for nose up, tilt it to bank, and the throttle lever sets the power (J to check it).",
     "Click to capture your mouse",
   ],
   [
     "Give it some power",
-    "Hold W to spool up. Keep the wings level and watch the airspeed climb. Your runway ends sooner than you think!",
+    "Hold W (or push the throttle lever forward) to spool up. Keep the wings level and watch the airspeed climb. Your runway ends sooner than you think!",
     "Hold W · aim for 0.85 m/s",
   ],
   [
     "Up, up and away",
-    "At 0.85 m/s, pull the mouse toward you in little pushes to lift the nose. The stick returns to center after each push.",
+    "At 0.85 m/s, pull the mouse toward you in little pushes (or pull the joystick back) to lift the nose. The stick returns to center after each push.",
     "Mouse toward you = nose UP",
   ],
   [

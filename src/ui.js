@@ -232,7 +232,7 @@ export class UI {
             ? "LANDING CONFIGURATION"
             : "FREE AS A TOY BIRD";
     this.el["stick-pip"].style.transform =
-      `translate(${controls.stick.x * 34}px,${controls.stick.y * 34}px)`;
+      `translate(${(controls.pip || controls.stick).x * 34}px,${(controls.pip || controls.stick).y * 34}px)`;
     this.el.stall.hidden = !s.stall || s.crashed || !controls.locked;
     const [mx, mz] = this.mapPoint(s.position.x, s.position.z);
     this.el["map-plane"].setAttribute(

@@ -4,29 +4,31 @@ import {
   animatePlane,
   loadPlaneModel,
   PLANE_MODEL_URL,
-} from "./plane.js?v=9";
-import { Controls } from "./controls.js?v=9";
+} from "./plane.js?v=10";
+import { Controls } from "./controls.js?v=10";
 import {
   createFlightState,
   stepFlight,
   toggleAntiGrav,
   findNearestSurface,
   ANTI_GRAV_RANGE,
-} from "./physics.js?v=9";
+} from "./physics.js?v=10";
 import {
   STEP,
   advanceFixed,
   Pose,
   interpolatePose,
   snapToTexel,
-} from "./loop.js?v=9";
-import { ChaseCamera } from "./camera.js?v=9";
-import { stepBalls, syncBallMeshes } from "./balls.js?v=9";
-import { CrashEffects } from "./crash.js?v=9";
-import { DamageSmoke } from "./effects.js?v=9";
-import { Tutorial } from "./tutorial.js?v=9";
-import { UI } from "./ui.js?v=9";
-import { LEVELS, getLevel } from "./levels/index.js?v=9";
+} from "./loop.js?v=10";
+import { ChaseCamera } from "./camera.js?v=10";
+import { stepBalls, syncBallMeshes } from "./balls.js?v=10";
+import { CrashEffects } from "./crash.js?v=10";
+import { DamageSmoke } from "./effects.js?v=10";
+import { Tutorial } from "./tutorial.js?v=10";
+import { UI } from "./ui.js?v=10";
+import { GamepadInput, padLabel } from "./gamepad.js?v=10";
+import { GamepadPanel } from "./gamepadPanel.js?v=10";
+import { LEVELS, getLevel } from "./levels/index.js?v=10";
 
 const canvas = document.querySelector("#game");
 try {
@@ -188,7 +190,9 @@ function start() {
     restart(true);
   }
 
+  const gamepad = new GamepadInput();
   const controls = new Controls(canvas, {
+    gamepad,
     onToggle(code) {
       if (code === "KeyR") {
         restart();
@@ -258,6 +262,38 @@ function start() {
     },
     onError: (message) => ui.toast(message, 7),
   });
+  const padPanel = new GamepadPanel(gamepad, { toast: (t, s) => ui.toast(t, s) });
+  addEventListener("gamepadconnected", (e) =>
+    ui.toast(
+      `🕹 ${padLabel(e.gamepad.id)} connected! Press J to check or remap it.`,
+      4,
+    ),
+  );
+  addEventListener("gamepaddisconnected", (e) =>
+    ui.toast(`🕹 ${padLabel(e.gamepad.id)} unplugged.`, 3),
+  );
+  const padStatus = document.getElementById("pad-status");
+  let padText = "";
+  function updatePadStatus() {
+    const g = controls.pad;
+    let text;
+    if (!gamepad.supported) text = "";
+    else if (!g || (!g.stick && !g.throttleDevice))
+      text = "🕹 JOYSTICK? PRESS ANY BUTTON ON IT · J SETUP";
+    else {
+      const parts = [];
+      if (g.stick) parts.push(`JOYSTICK: ${padLabel(g.stick.id).toUpperCase()}`);
+      if (g.throttleDevice && g.throttleDevice !== g.stick)
+        parts.push(`THROTTLE: ${padLabel(g.throttleDevice.id).toUpperCase()}`);
+      else if (g.lever != null) parts.push("THROTTLE LEVER ✓");
+      if (g.lever != null && !gamepad.leverEngaged) parts.push("MOVE LEVER TO USE");
+      text = `🕹 ${parts.join(" · ")} · J SETUP`;
+    }
+    if (text !== padText && padStatus) {
+      padText = text;
+      padStatus.textContent = text;
+    }
+  }
   function openLevelSelect() {
     if (state.crashed) {
       restart();
@@ -459,6 +495,8 @@ function start() {
     }
     room.update(time, dt);
     ui.update(state, controls, camera, target, dt, nearSurface);
+    updatePadStatus();
+    padPanel.update(dt);
     renderer.render(scene, camera);
   }
   requestAnimationFrame(frame);
@@ -494,6 +532,8 @@ function start() {
       loadLevel,
       plane,
       controls,
+      gamepad,
+      padPanel,
       get crashFX() {
         return crashFX;
       },

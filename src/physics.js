@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three.module.js";
-import { interactBalls } from "./balls.js?v=9";
+import { interactBalls } from "./balls.js?v=10";
 
 export const GRAVITY = 2.3; // deliberately toy-like: easier than full earth gravity at this scale
 export const GEAR_CLEARANCE = 0.068;
@@ -643,6 +643,11 @@ function core(s, input, dt, room, events) {
   else if (!e) syncEuler(s);
   if (input.throttleUp) s.throttle = clamp(s.throttle + 0.48 * dt, 0, 1);
   if (input.brake) s.throttle = clamp(s.throttle - 0.7 * dt, 0, 1);
+  else if (input.throttleSet != null && !input.throttleUp) {
+    // Throttle lever: glide to the lever's position (fast, but no instant jump).
+    const target = clamp(input.throttleSet, 0, 1);
+    s.throttle += clamp(target - s.throttle, -1.6 * dt, 1.6 * dt);
+  }
   s.gearExtension = THREE.MathUtils.damp(
     s.gearExtension,
     s.gearDown ? 1 : 0,

@@ -1,8 +1,16 @@
 export class Controls {
   constructor(
     canvas,
-    { onToggle = () => {}, onLock = () => {}, onError = () => {} } = {},
+    {
+      onToggle = () => {},
+      onLock = () => {},
+      onError = () => {},
+      gamepad = null,
+    } = {},
   ) {
+    this.gamepad = gamepad;
+    this.pad = null;
+    this.pip = { x: 0, y: 0 };
     this.canvas = canvas;
     this.keys = new Set();
     this.stick = { x: 0, y: 0 };
@@ -110,21 +118,37 @@ export class Controls {
     const r = Math.hypot(this.stick.x, this.stick.y),
       deadzone = 0.055;
     const gain = r > deadzone ? (r - deadzone) / (1 - deadzone) / r : 0;
+    const kbThrottle = this.keys.has("KeyW") || this.keys.has("KeyS");
+    // Joystick / throttle (Gamepad API): adds to the mouse and keys.
+    const g = (this.pad = this.gamepad ? this.gamepad.poll(kbThrottle) : null);
+    if (g) for (const code of g.actions || []) this.onToggle(code);
+    const c = (v) => Math.max(-1, Math.min(1, v));
+    const yaw = c(this.stick.x * gain + (g?.yaw || 0));
+    // Arrow keys are a steady "hold the stick" for pitch: ↓ pulls up, ↑ pushes down.
+    const pitch = c(
+      this.stick.y * gain +
+        (g?.pitch || 0) +
+        (this.keys.has("ArrowDown") ? 1 : 0) -
+        (this.keys.has("ArrowUp") ? 1 : 0),
+    );
+    const roll = c(
+      (this.keys.has("KeyA") ? 1 : 0) -
+        (this.keys.has("KeyD") ? 1 : 0) +
+        (g?.roll || 0),
+    );
+    // Reticle pip: right/back like the mouse, from whichever input is active.
+    this.pip = {
+      x: c(this.stick.x + (g ? -g.roll + g.yaw : 0)),
+      y: c(this.stick.y + (g?.pitch || 0)),
+    };
     return {
-      yaw: this.stick.x * gain,
-      // Arrow keys are a steady "hold the stick" for pitch: ↓ pulls up, ↑ pushes down.
-      pitch: Math.max(
-        -1,
-        Math.min(
-          1,
-          this.stick.y * gain +
-            (this.keys.has("ArrowDown") ? 1 : 0) -
-            (this.keys.has("ArrowUp") ? 1 : 0),
-        ),
-      ),
-      roll: (this.keys.has("KeyA") ? 1 : 0) - (this.keys.has("KeyD") ? 1 : 0),
-      throttleUp: this.keys.has("KeyW"),
-      brake: this.keys.has("KeyS"),
+      yaw,
+      pitch,
+      roll,
+      throttleUp: this.keys.has("KeyW") || !!g?.throttleUp,
+      brake: this.keys.has("KeyS") || !!g?.brake,
+      // Absolute lever position 0..1 (null until the lever is moved).
+      throttleSet: g?.throttle ?? null,
     };
   }
   dispose() {

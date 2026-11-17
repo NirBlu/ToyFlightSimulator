@@ -13,7 +13,7 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23132d3b'/%3E%3Ctext x='8' y='46' font-size='44'%3E✈%3C/text%3E%3C/svg%3E"
     />
-    <link rel="stylesheet" href="./src/style.css?v=9" />
+    <link rel="stylesheet" href="./src/style.css?v=10" />
     <script type="importmap">
       {
         "imports": {
@@ -26,7 +26,7 @@
   <body>
     <canvas
       id="game"
-      aria-label="Toy plane flight simulator. Desktop keyboard and mouse required."
+      aria-label="Toy plane flight simulator. Keyboard and mouse, or a joystick and throttle."
     ></canvas>
     <div id="app">
       <header class="topbar">
@@ -114,7 +114,7 @@
           <span>THROTTLE <b id="throttle">0%</b></span>
           <div class="meter"><i id="throttle-fill"></i></div>
           <div class="tiny-label">
-            <kbd>W</kbd> MORE <kbd>S</kbd> LESS / BRAKE
+            <kbd>W</kbd> MORE <kbd>S</kbd> LESS / BRAKE · OR THE LEVER
           </div>
         </div>
         <div class="instrument altitude">
@@ -155,12 +155,12 @@
         <span
           ><kbd>A</kbd><kbd>D</kbd> ROLL <i>·</i> MOUSE: PITCH & YAW (LOOPS!) <i>·</i> <kbd>↓</kbd><kbd>↑</kbd> PITCH
           <i>·</i> <kbd>G</kbd> GEAR <i>·</i> <kbd>F</kbd> FLAPS <i>·</i>
-          <kbd>V</kbd> ANTI-GRAV <i>·</i> <kbd>L</kbd> LEVELS</span
-        ><span id="status">DESKTOP · KEYBOARD + MOUSE / THRUSTMASTER</span>
+          <kbd>V</kbd> ANTI-GRAV <i>·</i> <kbd>L</kbd> LEVELS <i>·</i> <kbd>J</kbd> JOYSTICK</span
+        ><span id="pad-status"></span><span id="status">DESKTOP · KEYBOARD + MOUSE / THRUSTMASTER</span>
       </footer>
       <div id="hit-flash" aria-hidden="true"></div>
       <div id="fatal" hidden role="alert"></div>
     </div>
-    <script type="module" src="./src/main.js?v=9"></script>
+    <script type="module" src="./src/main.js?v=10"></script>
   </body>
 </html>

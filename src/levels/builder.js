@@ -1,5 +1,5 @@
 import * as THREE from "../../vendor/three.module.js";
-import { createBall } from "../balls.js?v=9";
+import { createBall } from "../balls.js?v=10";
 
 /**
  * Shared helpers for building levels out of primitives.

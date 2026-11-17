@@ -100,14 +100,49 @@ Physics runs at a fixed 120 Hz. The plane (and the bouncy balls) are drawn **int
 | **Esc**                               | Release mouse and pause                                                               |
 | **H / Flight school**                 | Replay or hide tutorial                                                               |
 | **Enter / Skip**                      | Dismiss tutorial                                                                      |
+| **J**                                 | Joystick & throttle setup panel (live axes / buttons, remap by moving)                |
 
 W/S is intentional: the original request mentioned A twice; A/D remains roll.
 
-### Mouse / Thrustmaster recentering
+### Joystick & throttle (Thrustmaster HOTAS, any USB stick or gamepad)
 
-A Thrustmaster **configured to emit mouse movement** works like the mouse (native joystick axes / WebHID are not implemented). Browsers cannot warp the real OS cursor to screen center. Instead this game uses the **Pointer Lock API** for unlimited relative `movementX/Y`, hiding the OS cursor while locked. Relative movement deflects a circular **virtual stick**, with a 5.5% deadzone. A light spring continuously centers it; **110 ms after movement pauses**, a stronger spring rapidly returns it to neutral. It never gets stuck at a screen edge. The reticle and amber pip show deflection.
+Real joysticks work through the browser **Gamepad API** (Chrome or Firefox, Linux / Windows / macOS; no drivers or extra software). The stick and the throttle can be one device (T.Flight HOTAS X / 4 / One) or two separate USB devices (e.g. T.16000M stick + TWCS throttle).
 
-Use small, repeated pushes to change attitude, not a permanently held mouse offset. Centering returns the _input_ to neutral; aircraft attitude settles gradually. Pointer Lock needs a real click and localhost or HTTPS, and may be restricted inside embedded previews. Esc always releases the mouse. This build has not been validated on physical Thrustmaster hardware.
+| Joystick / throttle               | Action                                                                  |
+| --------------------------------- | ----------------------------------------------------------------------- |
+| **Stick back / forward**          | Nose up / nose down (same as the mouse toward / away from you)          |
+| **Stick left / right**            | Bank (roll) left / right, like A / D. Press **M** in the J panel to make it turn (yaw) like the mouse instead |
+| **Twist / rudder rocker**         | Turn (yaw) left / right                                                 |
+| **Throttle lever**                | Sets the power directly: back = idle, forward = full (like W / S)       |
+| **Lever all the way back**        | Idle + wheel brakes on the ground (like holding S)                      |
+| **Trigger (button 0)**            | V anti-grav                                                             |
+| **Button 1 / button 2**           | G gear / F flaps                                                        |
+| Xbox / PlayStation pad            | Left stick flies, right stick turns, RT = more power, LT = less / brake |
+
+- **Default axes** (one device, e.g. T.Flight HOTAS on Linux): axis 0 = stick X (roll), 1 = stick Y (pitch), 2 = twist (turn), 5 = throttle lever (a 4–5 axis device uses its last axis). A separate throttle device (name contains "Throttle" / "TWCS") is used for power automatically. The J panel shows the numbers live.
+- **Linux browsers hide a joystick until you press a button on it.** Plug it in, click into the game tab, press any button: the footer then shows `🕹 JOYSTICK: …`.
+- The mouse and keys keep working. The stick adds to them (8% deadzone, so a resting stick does nothing), and the throttle lever only takes over once you **move it**. Pressing W or S hands power back to the keys until you move the lever again.
+- You still click **LET’S FLY** once to start (browsers only allow mouse capture after a real click).
+
+**J panel (setup / debug).** Press **J** any time to open a live view of every connected device: each axis as a moving bar (axes in use are green), each button lights up when pressed, and the current role of each axis. If something is mapped wrong, re-learn it by moving it:
+
+| Key in J panel | Learn                                                                                     |
+| -------------- | ----------------------------------------------------------------------------------------- |
+| **P**          | Pitch: pull the stick all the way back                                                    |
+| **X**          | Roll: push the stick all the way right                                                    |
+| **Y**          | Twist / rudder: twist right                                                               |
+| **T**          | Throttle: move the lever back and forth, leave it fully forward, press **T** again        |
+| **B**          | Buttons: press the button you want for gear, then flaps, then anti-grav                   |
+| **I / M / C**  | Invert pitch / stick left-right = roll or turn / reset everything to defaults             |
+| **Esc**        | Cancel learning                                                                           |
+
+The direction you move while learning also sets the axis direction, so nothing ends up backwards. Mappings are saved in the browser (`localStorage`, key `toyflight-gamepad-v1`) per device name. All defaults live in one object, `DEFAULT_GAMEPAD_CONFIG` / `defaultBindings()` in `src/gamepad.js`.
+
+### Mouse recentering
+
+Browsers cannot warp the real OS cursor to screen center. Instead this game uses the **Pointer Lock API** for unlimited relative `movementX/Y`, hiding the OS cursor while locked. Relative movement deflects a circular **virtual stick**, with a 5.5% deadzone. A light spring continuously centers it; **110 ms after movement pauses**, a stronger spring rapidly returns it to neutral. It never gets stuck at a screen edge. The reticle and amber pip show deflection (mouse or joystick).
+
+Use small, repeated pushes to change attitude, not a permanently held mouse offset. Centering returns the _input_ to neutral; aircraft attitude settles gradually. Pointer Lock needs a real click and localhost or HTTPS, and may be restricted inside embedded previews. Esc always releases the mouse.
 
 ## Your first flight
 
@@ -171,7 +206,9 @@ src/plane.js           Primitive fallback plane, gear/flap animation, GLB plane 
 src/physics.js         Quaternion flight, land-anywhere touchdowns, damage, bumps, bounds, anti-grav frames
 src/balls.js           Bouncy ball physics and plane-ball pushes (no damage)
 src/effects.js         Damage smoke trail
-src/controls.js        Pointer lock, virtual stick, springs, key input
+src/controls.js        Pointer lock, virtual stick, springs, key input (+ joystick merge)
+src/gamepad.js         Gamepad API: HOTAS / stick / throttle mapping, lever takeover, learning
+src/gamepadPanel.js    J panel: live axes / buttons, remap by moving an axis
 src/tutorial.js        Eight short, skippable lessons (takeoff, landing, tricks)
 src/crash.js           Plane-piece debris, fire, smoke, light flash
 src/ui.js              Instruments, damage meter, radar, level picker, menus
@@ -179,13 +216,13 @@ src/style.css          Responsive warm cockpit-style overlay
 vendor/                Three.js r187 + the few addons used (relative imports only)
 models/plane.glb       Nir's plane (served as ./models/ raw and from dist/)
 public/models/         Vite public dir; put new .glb files in models/ instead
-tests/                 Node built-in tests (flight, aerobatics, anti-grav, interpolation, damage, balls, levels, imports)
+tests/                 Node built-in tests (joystick mapping, flight, aerobatics, anti-grav, interpolation, damage, balls, levels, imports)
 vite.config.js         Relative base, vendor chunk, copies models/ into dist/
 ```
 
 ### Notes / limits
 
-- Desktop keyboard + mouse only; no touch controls, audio, native gamepad mapping, or multiplayer yet.
+- Desktop keyboard + mouse and USB joystick / throttle / gamepad; no touch controls, audio or multiplayer yet. Joystick defaults are guesses per device family and have not been validated on physical Thrustmaster hardware: use the J panel to fix any axis.
 - The chase camera is level-bounded, not a full furniture-occlusion camera.
 - Collision detection uses small fixed steps and multiple body / wing probes, not mesh-level rigid-body physics. Decorative leaves / curtain folds are visual-only.
 - Dependencies are pinned through `package-lock.json`; `node_modules/` and `dist/` stay out of git.
