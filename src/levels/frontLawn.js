@@ -4,7 +4,7 @@ import {
   addSky,
   canvasTexture,
   pulsePads,
-} from "./builder.js?v=12";
+} from "./builder.js?v=13";
 
 /** A big sunny front yard: ~36 × 30 m of lawn, stone wall, patio, porch and house. */
 export default {

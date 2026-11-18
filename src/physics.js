@@ -1,5 +1,5 @@
 import * as THREE from "../vendor/three.module.js";
-import { interactBalls } from "./balls.js?v=12";
+import { interactBalls } from "./balls.js?v=13";
 
 export const GRAVITY = 2.3; // deliberately toy-like: easier than full earth gravity at this scale
 export const GEAR_CLEARANCE = 0.068;
@@ -750,15 +750,7 @@ function core(s, input, dt, room, events) {
       wx *= fade(wx * (right.z * fwd.x - right.x * fwd.z));
       wy *= fade(wy * (up.z * fwd.x - up.x * fwd.z));
     }
-    // Gentle auto-level, only on an axis the pilot has let go of, and never
-    // while they are pulling through a loop (pitching while not upright).
-    const rollK = THREE.MathUtils.smoothstep(s.rollIdle, 0.25, 0.7);
-    if (rollK > 0 && !(Math.abs(ip) > 0.15 && up.y < 0.5)) {
-      if (up.y >= 0) wz += -1.35 * right.y * rollK;
-      else wz += -(right.y >= 0 ? 1 : -1) * 0.9 * rollK; // inverted: roll back upright
-    }
-    const pitchK = THREE.MathUtils.smoothstep(s.pitchIdle, 0.6, 1.2);
-    if (pitchK > 0 && up.y > 0.3) wx += -0.6 * fwd.y * pitchK * up.y;
+    // No auto-level: with the stick centered the plane keeps its attitude.
     const w = new THREE.Vector3(wx, wy, wz);
     const angle = w.length() * dt;
     if (angle > 1e-9) {

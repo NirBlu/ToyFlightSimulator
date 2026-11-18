@@ -8,19 +8,23 @@ function virtual() {
   c.keys = new Set();
   return c;
 }
-test("virtual stick springs to center 110ms after a push", () => {
+test("mouse stick holds its position after the mouse stops (no spring back)", () => {
   const c = virtual();
-  for (let i = 0; i < 30; i++) c.update(1 / 60, 1200 + (i * 1000) / 60);
-  assert.ok(Math.hypot(c.stick.x, c.stick.y) < 0.001);
-  const input = c.update(1 / 60, 1800);
+  const first = c.update(1 / 60, 1016);
+  for (let i = 0; i < 300; i++) c.update(1 / 60, 1200 + (i * 1000) / 60);
+  const later = c.update(1 / 60, 9000);
+  assert.equal(c.stick.x, 0.6);
+  assert.equal(c.stick.y, 0.8);
+  assert.ok(later.pitch > 0.7 && later.yaw > 0.5);
+  assert.equal(later.pitch, first.pitch);
+  assert.equal(later.yaw, first.yaw);
+});
+test("C / middle click re-centers the mouse stick", () => {
+  const c = virtual();
+  c.recenter();
+  const input = c.update(1 / 60, 2000);
   assert.equal(input.pitch, 0);
   assert.equal(input.yaw, 0);
-});
-test("light centering while pushing preserves meaningful pitch/yaw", () => {
-  const c = virtual();
-  const input = c.update(1 / 60, 1050);
-  assert.ok(input.pitch > 0.7);
-  assert.ok(input.yaw > 0.5);
 });
 test("W/S and A/D map exactly to throttle/brake and roll", () => {
   const c = virtual();

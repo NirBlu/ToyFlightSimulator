@@ -42,6 +42,7 @@ export class Controls {
           "KeyH",
           "KeyL",
           "KeyV",
+          "KeyC",
           "ArrowUp",
           "ArrowDown",
           "Enter",
@@ -57,18 +58,21 @@ export class Controls {
           /^Digit[1-9]$/.test(e.code))
       )
         this.onToggle(e.code);
+      if (e.code === "KeyC" && !e.repeat) this.recenter();
       if (this.locked) this.keys.add(e.code);
+    });
+    on(document, "mousedown", (e) => {
+      if (e.button === 1 && this.locked) {
+        e.preventDefault();
+        this.recenter();
+      }
     });
     on(document, "keyup", (e) => this.keys.delete(e.code));
     on(document, "mousemove", (e) => {
       if (!this.locked) return;
-      this.stick.x += e.movementX * 0.012;
-      this.stick.y += e.movementY * 0.012;
-      const length = Math.hypot(this.stick.x, this.stick.y);
-      if (length > 1) {
-        this.stick.x /= length;
-        this.stick.y /= length;
-      }
+      const c = (v) => Math.max(-1, Math.min(1, v));
+      this.stick.x = c(this.stick.x + e.movementX * 0.012);
+      this.stick.y = c(this.stick.y + e.movementY * 0.012);
       this.lastMove = performance.now();
     });
     on(document, "pointerlockchange", () => {
@@ -104,17 +108,19 @@ export class Controls {
       );
     }
   }
+  /** Put the mouse stick back in the middle (C key / middle click). */
+  recenter() {
+    this.stick.x = 0;
+    this.stick.y = 0;
+  }
   clear() {
     this.keys.clear();
     this.stick.x = 0;
     this.stick.y = 0;
   }
   update(dt, now = performance.now()) {
-    // No real OS cursor warping: pointer lock supplies unlimited relative motion.
-    // A light continuous spring, then a stronger spring 110 ms after the last push.
-    const decay = Math.exp(-(now - this.lastMove > 110 ? 17 : 0.65) * dt);
-    this.stick.x *= decay;
-    this.stick.y *= decay;
+    // The mouse is a persistent virtual stick: it stays where you leave it
+    // (no spring back to center). C or the middle mouse button re-centers it.
     const r = Math.hypot(this.stick.x, this.stick.y),
       deadzone = 0.055;
     const gain = r > deadzone ? (r - deadzone) / (1 - deadzone) / r : 0;

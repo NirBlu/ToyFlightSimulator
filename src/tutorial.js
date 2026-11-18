@@ -11,7 +11,7 @@ const lessons = [
   ],
   [
     "Up, up and away",
-    "At 0.85 m/s, pull the mouse toward you in little pushes (or pull the joystick back) to lift the nose. The stick returns to center after each push.",
+    "At 0.85 m/s, pull the mouse toward you (or pull the joystick back) to lift the nose. The mouse stick stays where you leave it: press C (or middle-click) to center it again.",
     "Mouse toward you = nose UP",
   ],
   [

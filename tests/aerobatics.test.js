@@ -139,10 +139,10 @@ test("no auto-level fights the pilot: a held bank and a held climb stay", () => 
     stepFlight(s, { pitch: 0, yaw: 0, roll: 1 }, 1 / 120, open());
   const bank = Math.abs(s.roll);
   assert.ok(bank > 1, `banked past the old 63° limit (${bank.toFixed(2)})`);
-  // Let go: gentle return toward wings level.
+  // Let go: no auto-level, the bank stays where the pilot left it.
   for (let i = 0; i < 240; i++)
     stepFlight(s, { pitch: 0, yaw: 0, roll: 0 }, 1 / 120, open());
-  assert.ok(Math.abs(s.roll) < bank * 0.6, "levels out gently once released");
+  assert.ok(Math.abs(Math.abs(s.roll) - bank) < 0.05, `bank held (${s.roll.toFixed(2)} vs ${bank.toFixed(2)})`);
   const c = cruising(5, 1.8);
   for (let i = 0; i < 60; i++)
     stepFlight(
@@ -155,6 +155,22 @@ test("no auto-level fights the pilot: a held bank and a held climb stay", () => 
     c.pitch > 0.67,
     `pitch is not clamped at the old 0.67 (${c.pitch.toFixed(2)})`,
   );
+});
+
+test("zero input: no attitude auto-levels (pitch, bank, inverted all hold)", () => {
+  const elev = (s) => Math.asin(axis(s, 0, 0, -1).y);
+  const bankOf = (s) => Math.atan2(-axis(s, 1, 0, 0).y, axis(s, 0, 1, 0).y);
+  for (const [p, r] of [[0.4, 0], [-0.3, 0], [0.2, 0.7], [0, Math.PI * 0.9]]) {
+    const s = cruising(10, 2);
+    s.quaternion.setFromEuler(new THREE.Euler(p, 0, r, "YXZ"));
+    s._e = null;
+    const e0 = elev(s),
+      b0 = bankOf(s);
+    // Half a second hands-off: the old auto-level would have kicked in by now.
+    for (let i = 0; i < 60; i++) stepFlight(s, { pitch: 0, yaw: 0, roll: 0, throttleUp: true }, 1 / 120, open());
+    assert.ok(Math.abs(bankOf(s) - b0) < 0.03, `bank ${r} held (${bankOf(s).toFixed(3)} vs ${b0.toFixed(3)})`);
+    if (Math.abs(r) < 1) assert.ok(Math.abs(elev(s) - e0) < 0.03, `pitch ${p} held (${elev(s).toFixed(3)} vs ${e0.toFixed(3)})`);
+  }
 });
 
 test("inverted touchdown is graded as a crash, not a landing", () => {

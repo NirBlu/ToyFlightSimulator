@@ -68,7 +68,7 @@ The **DAMAGE** meter on the HUD shows 0–100%. Above 50% the plane trails smoke
 
 ## Rolls, steep climbs and anti-grav
 
-**Aerobatics.** The plane's attitude is a quaternion rotated in its own body axes (pitch about the wings, roll about the fuselage, yaw about the vertical fin), so there are no gimbal flips. **Rolls are unlimited**: hold **A** or **D** (or the joystick roll axis) for a full **barrel roll** and keep going. **Up / down is limited** to 55° of nose elevation above or below the horizon (no loops): the pitch rate eases off over the last ~17° so the nose settles at the limit without a snap, and the limit holds upside down too. It is measured against the current gravity direction, so on an anti-grav wall or ceiling "the horizon" is that surface. The wing's lift follows the side facing the sky, so rolls lose very little height and you can fly upside down. Auto-level is gentle and only kicks in on an axis you have let go of. The chase camera stays calm in normal flight and blends into the plane's own frame when you are steep or inverted, so the view rolls with you.
+**Aerobatics.** The plane's attitude is a quaternion rotated in its own body axes (pitch about the wings, roll about the fuselage, yaw about the vertical fin), so there are no gimbal flips. **Rolls are unlimited**: hold **A** or **D** (or the joystick roll axis) for a full **barrel roll** and keep going. **Up / down is limited** to 55° of nose elevation above or below the horizon (no loops): the pitch rate eases off over the last ~17° so the nose settles at the limit without a snap, and the limit holds upside down too. It is measured against the current gravity direction, so on an anti-grav wall or ceiling "the horizon" is that surface. The wing's lift follows the side facing the sky, so rolls lose very little height and you can fly upside down. There is **no auto-level**: let go of the stick and the plane keeps the attitude you left it in (only a stall drops the nose), so you fly it back to level yourself. The chase camera stays calm in normal flight and blends into the plane's own frame when you are steep or inverted, so the view rolls with you.
 
 **Anti-grav (V).** Fly within **1.5 m** of a wall, the ceiling, or the side or underside of anything solid (a bookcase, a shelf, an aisle sign, the side of the house…). A hint pill says `PRESS V · ANTI-GRAV ONTO THE NORTH WALL`. Press **V** and gravity swings toward that surface: the plane turns its belly to it, a soft magnet settles you down (fall speed toward it is capped and thrust is reduced until you touch down), and the camera's "up" swings smoothly with it. Landings, damage and land-anywhere all work on the new surface exactly like on the floor, and the toast names it (_Nice landing on the ceiling!_, _the north wall_, _the side of the house_). Taxi and take off from it upside down or sideways. Press **V** again to get normal gravity back (the plane flips upright and floats down gently), or just fly more than ~3 m away from the surface and it lets go by itself. With nothing in range V shows _No surface close enough_. Outdoors there is no ceiling, but walls of objects work. **R** resets it.
 
@@ -88,6 +88,7 @@ Physics runs at a fixed 120 Hz. The plane (and the bouncy balls) are drawn **int
 | **Mouse toward you** (positive Y)     | Pull back / nose up                                                                   |
 | **Mouse away from you** (negative Y)  | Push forward / nose down                                                              |
 | **Mouse left / right**                | Yaw left / right                                                                      |
+| **C / middle mouse button**           | Re-center the mouse stick (it holds its position otherwise)                           |
 | **↓ / ↑ arrow** (hold)                | Steady pull up / push down, same as holding the stick back / forward                  |
 | **G**                                 | Toggle landing gear (animated; retraction is protected while grounded)                |
 | **F**                                 | Toggle flaps: extra lift and drag, lower stall speed                                  |
@@ -138,11 +139,11 @@ Real joysticks work through the browser **Gamepad API** (Chrome or Firefox, Linu
 
 The direction you move while learning also sets the axis direction, so nothing ends up backwards. Mappings are saved in the browser (`localStorage`, key `toyflight-gamepad-v2`; older v1 saves are ignored) per device name. All defaults live in one object, `DEFAULT_GAMEPAD_CONFIG` / `defaultBindings()` in `src/gamepad.js`.
 
-### Mouse recentering
+### Mouse stick (no self-centering)
 
-Browsers cannot warp the real OS cursor to screen center. Instead this game uses the **Pointer Lock API** for unlimited relative `movementX/Y`, hiding the OS cursor while locked. Relative movement deflects a circular **virtual stick**, with a 5.5% deadzone. A light spring continuously centers it; **110 ms after movement pauses**, a stronger spring rapidly returns it to neutral. It never gets stuck at a screen edge. The reticle and amber pip show deflection (mouse or joystick).
+Browsers cannot warp the real OS cursor, so the game uses the **Pointer Lock API** for unlimited relative `movementX/Y`, hiding the OS cursor while locked. Mouse movement moves a **persistent virtual stick** (each axis clamped to −1…1, 5.5% deadzone in the middle). It **stays where you leave it**, just like a joystick you hold: nothing springs it back. Press **C** or click the **middle mouse button** to snap it back to the center. The reticle's amber pip shows where the stick is (mouse plus joystick).
 
-Use small, repeated pushes to change attitude, not a permanently held mouse offset. Centering returns the _input_ to neutral; aircraft attitude settles gradually. Pointer Lock needs a real click and localhost or HTTPS, and may be restricted inside embedded previews. Esc always releases the mouse.
+A real joystick springs itself back; the game uses its raw position with an 8% deadzone and no extra smoothing. Pointer Lock needs a real click and localhost or HTTPS, and may be restricted inside embedded previews. Esc always releases the mouse (pausing also re-centers the mouse stick).
 
 ## Your first flight
 
@@ -206,7 +207,7 @@ src/plane.js           Primitive fallback plane, gear/flap animation, GLB plane 
 src/physics.js         Quaternion flight, land-anywhere touchdowns, damage, bumps, bounds, anti-grav frames
 src/balls.js           Bouncy ball physics and plane-ball pushes (no damage)
 src/effects.js         Damage smoke trail
-src/controls.js        Pointer lock, virtual stick, springs, key input (+ joystick merge)
+src/controls.js        Pointer lock, persistent mouse stick (C recenters), key input (+ joystick merge)
 src/gamepad.js         Gamepad API: HOTAS / stick / throttle mapping, lever takeover, learning
 src/gamepadPanel.js    J panel: live axes / buttons, remap by moving an axis
 src/tutorial.js        Eight short, skippable lessons (takeoff, landing, tricks)
