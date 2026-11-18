@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import * as THREE from "../vendor/three.module.js";
 import { LEVELS } from "../src/levels/index.js";
-import { createFlightState, stepFlight, padContains } from "../src/physics.js";
+import { createFlightState, stepFlight, padContains, findNearestSurface } from "../src/physics.js";
 import { stepBalls } from "../src/balls.js";
 
 // Drawing-only canvas stub (no GPU / DOM needed for geometry + physics checks).
@@ -16,10 +16,10 @@ globalThis.document = {
 };
 const build = (def) => def.create(new THREE.Scene());
 
-test("there are five levels with unique ids and complete environments", () => {
+test("there are six levels with unique ids and complete environments", () => {
   assert.deepEqual(
     LEVELS.map((l) => l.id),
-    ["living-room", "front-lawn", "toy-room", "parking-lot", "mega-mart"],
+    ["living-room", "front-lawn", "toy-room", "parking-lot", "mega-mart", "apartment-lobby"],
   );
   for (const l of LEVELS) {
     assert.ok(l.name && l.short && l.tagline && l.objective && l.heroTitle);
@@ -170,4 +170,42 @@ test("Mega Mart is a big indoor store with aisles, checkouts, freezers, produce 
   const top = store.colliders.find((c) => c.name === "Cereal and pasta shelf");
   assert.ok(Math.abs(top.max.y - store.spawn.y + 0.068) < 1e-6);
   assert.equal(def.name.toLowerCase().includes("walmart"), false);
+});
+
+test("Apartment Lobby: elevators, mailboxes, lounge, tables, concierge desk", () => {
+  const def = LEVELS.find((l) => l.id === "apartment-lobby");
+  assert.equal(LEVELS.indexOf(def), 5, "key 6");
+  const scene = new THREE.Scene();
+  const lobby = def.create(scene);
+  const b = lobby.bounds;
+  assert.ok(!b.soft, "indoor: walls and ceiling for anti-grav");
+  assert.ok(Math.abs(b.maxX - b.minX - 14) < 0.01 && Math.abs(b.maxZ - b.minZ - 18) < 0.01, "14 × 18 m");
+  assert.equal(b.maxY, 4.5);
+  assert.equal(lobby.elevators.length, 3);
+  const names = lobby.colliders.map((c) => c.name.toLowerCase());
+  for (const n of ["mailboxes", "couch seat", "coffee table", "armchair seat", "side table", "console table", "round table", "concierge desk", "column", "elevator bench"])
+    assert.ok(names.includes(n), n);
+  assert.equal(lobby.spawnPadId, "desk");
+  assert.equal(lobby.targetPadId, "coffee");
+  // Mailbox grid: many brass doors, one instanced draw call.
+  let doors = 0,
+    tris = 0;
+  scene.traverse((o) => {
+    if (o.isInstancedMesh && o.count > doors) doors = o.count;
+    if (o.isMesh) {
+      const g = o.geometry;
+      const t = (g.index ? g.index.count : g.attributes.position.count) / 3;
+      tris += t * (o.isInstancedMesh ? o.count : 1);
+    }
+  });
+  assert.ok(doors >= 80, `mailbox doors: ${doors}`);
+  assert.ok(tris < 100000, `triangles: ${tris}`);
+  // Elevator doors open and close.
+  const e = lobby.elevators[0];
+  for (let i = 0; i < 120 * 8; i++) lobby.update(i / 120, 1 / 120);
+  const opened = Math.max(...[0].map(() => e.open));
+  assert.ok(opened > 0.5 || lobby.elevators.some((x) => x.open > 0.5), "a door is open");
+  // Anti-grav: next to a wall there is a surface to stick to.
+  assert.ok(findNearestSurface(lobby, new THREE.Vector3(6.3, 2, 6), 1.5), "east wall");
+  assert.ok(findNearestSurface(lobby, new THREE.Vector3(0, 3.8, 3), 1.5), "ceiling");
 });

@@ -1,7 +1,7 @@
 const lessons = [
   [
     "Meet your tiny plane",
-    "Pick a level (keys 1–5 or L anytime), then click LET’S FLY to capture the mouse. Mouse back = nose up. Mouse sideways = turn. Got a joystick? Pull it back for nose up, push it side to side to turn, roll it to bank, and the throttle lever sets the power (J to check it).",
+    "Pick a level (keys 1–6 or L anytime), then click LET’S FLY to capture the mouse. Mouse back = nose up. Mouse sideways = turn. Got a joystick? Pull it back for nose up, push it side to side to turn, roll it to bank, and the throttle lever sets the power (J to check it).",
     "Click to capture your mouse",
   ],
   [
